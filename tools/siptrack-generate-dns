@@ -1,0 +1,576 @@
+#!/usr/bin/env python
+
+from optparse import OptionParser
+import time
+import sys
+import os 
+import stat
+import logging
+import logging.handlers
+import siptracklib
+import siptracklib.errors
+
+IPV6_PTR_DOMAIN_LEN = 8 # == /32 boundry
+
+class DNSGenerationError(StandardError):
+    pass
+
+class ValidationError(DNSGenerationError):
+    pass
+
+class DuplicateError(DNSGenerationError):
+    pass
+
+class AlreadyRunningError(DNSGenerationError):
+    pass
+
+def ipv4_reverse(address):
+    address = address.split('.')
+    address.reverse()
+    address = '.'.join(address)
+    address = '%s.in-addr.arpa' % (address)
+    return address
+
+def ipv6_reverse(address):
+    address = address.replace(':', '')
+    address = [c for c in address]
+    address.reverse()
+    address = '.'.join(address)
+    address = '%s.ip6.arpa' % (address)
+    return address
+
+class DNSRecord(object):
+    def __init__(self, src, dst):
+        self.src = self._parseSource(src)
+        self.dst = self._parseDestination(dst)
+        self._validate()
+        self.domain = self._getDomain(self.src)
+
+    def __str__(self):
+        return '%s\t\tIN\t%s\t%s' % (self.src, self.record_class, self.dst)
+
+    def __eq__(self, other):
+        ret = False
+        if self.record_class == other.record_class and self.src == other.src:
+            ret = True
+        return ret
+
+    def _parseSource(self, source):
+        src = src.strip()
+        return src
+
+    def _parseDestination(self, destination):
+        destination = destination.strip()
+        return destination
+
+    def _getDomain(self, hostname):
+        """Return everything after the first '.' in the given string."""
+        split = hostname.split('.', 1)
+        return split[1].rstrip('.')
+
+    def isValidHostname(self, hostname):
+        split = hostname.rstrip('.').split('.')
+        if len(split) < 2:
+            return False
+        return True
+
+    def isValidIPv4Address(self, address):
+        split = address.split('.')
+        if len(split) != 4:
+            return False
+        try:
+            [int(n) for n in split]
+        except ValueError:
+            return False
+        return True
+
+    def isValidIPv6Address(self, address):
+        return True
+
+class ARecord(DNSRecord):
+    record_class = 'A'
+
+    def _validate(self):
+        if not self.isValidHostname(self.src):
+            raise ValidationError('invalid source %s' % (self.src))
+        if not self.isValidIPv4Address(self.dst):
+            raise ValidationError('invalid destination')
+
+    def _parseSource(self, src):
+        src = '%s.' % (src.strip())
+        return src
+
+class AAAARecord(DNSRecord):
+    record_class = 'AAAA'
+
+    def _validate(self):
+        if not self.isValidHostname(self.src):
+            raise ValidationError('invalid source %s' % (self.src))
+        if not self.isValidIPv6Address(self.dst):
+            raise ValidationError('invalid destination')
+
+    def _parseSource(self, src):
+        src = '%s.' % (src.strip())
+        return src
+
+class NSRecord(DNSRecord):
+    record_class = 'NS'
+
+    def _validate(self):
+        if not self.isValidHostname(self.src):
+            raise ValidationError('invalid source %s' % (self.src))
+        if not self.isValidHostname(self.dst):
+            raise ValidationError('invalid destination')
+
+    def _parseSource(self, src):
+        src = '%s.' % (src.strip())
+        return src
+    _parseDestination = _parseSource
+
+class CNAMERecord(DNSRecord):
+    record_class = 'CNAME'
+
+    def _validate(self):
+        if not self.isValidHostname(self.src):
+            raise ValidationError('invalid source %s' % (self.src))
+        if not self.isValidHostname(self.dst):
+            raise ValidationError('invalid destination')
+
+    def _parseSource(self, src):
+        src = '%s.' % (src.strip())
+        return src
+    _parseDestination = _parseSource
+
+class PTRRecord(DNSRecord):
+    record_class = 'PTR'
+    reverse_domain = 'in-addr.arpa'
+
+    def _validate(self):
+        if not self.isValidHostname(self.src):
+            raise ValidationError('invalid source %s' % (self.src))
+        if not self.isValidHostname(self.dst):
+            raise ValidationError('invalid destination')
+        if not self.src.endswith('%s.' % (self.reverse_domain)):
+            raise ValidationError('invalid source domain %s for reverse record' % (self.src))
+
+    def _parseSource(self, src):
+        src = '%s.' % (src.strip())
+        return src
+    _parseDestination = _parseSource
+
+class IPv6PTRRecord(PTRRecord):
+    reverse_domain = 'ip6.arpa'
+
+    def _getDomain(self, hostname):
+        """Return everything after the first '.' in the given string."""
+
+        split = hostname.rstrip('.').split('.')
+        include_count = 2 + IPV6_PTR_DOMAIN_LEN
+        split = split[-include_count:]
+        return '.'.join(split)
+
+class DNSRecords(object):
+    def __init__(self):
+        self.records = {}
+
+    def _add(self, dnsrecord, override):
+        if dnsrecord.domain not in self.records:
+            self.records[dnsrecord.domain] = []
+        if dnsrecord in self.records[dnsrecord.domain]:
+            if override:
+                logging.debug('overriding duplicate for "%s, %s"' % (dnsrecord.src, dnsrecord.dst))
+                self.records[dnsrecord.domain].remove(dnsrecord)
+            else:
+                raise DuplicateError('duplicate record: "%s"' % (dnsrecord.src))
+        self.records[dnsrecord.domain].append(dnsrecord)
+
+    def printRecords(self):
+        for domain in self.records:
+            print 'DOMAIN', domain
+            for record in self.records[domain]:
+                print 'RECORD', record
+
+    def addRecord(self, record, override = False):
+        self._add(record, override)
+
+    def _writeRecords(self, fd, domain):
+        for record in self.records.get(domain, []):
+            fd.write('%s\n' % (record))
+
+    def writeZone(self, output_dir, domain, template = None):
+        filename = os.path.join(output_dir, domain)
+        out_fd = open(filename, 'w')
+        if template:
+            timestamp = str(int(time.time()))
+            template_fd = open(template, 'r')
+            for line in template_fd:
+                stripped = line.strip()
+                line = line.replace('$DOMAIN$', domain)
+                line = line.replace('$TIMESTAMP$', timestamp)
+                if stripped == '$RECORDS$':
+                        self._writeRecords(out_fd, domain)
+                else:
+                    out_fd.write(line)
+            template_fd.close()
+        else:
+            self._writeRecords(out_fd, domain)
+        out_fd.close()
+
+    def writeZones(self, output_dir, template = None, domains = None):
+        if domains is None:
+            domains = self.records.keys()
+        for domain in domains:
+            self.writeZone(output_dir, domain, template)
+
+    def writeMasterNamedConf(self, filename, zonefile_dir, domains = None):
+        fd = open(filename, 'w')
+        if domains is None:
+            domains = self.records.keys()
+        for domain in domains:
+            zone_filename = os.path.join(zonefile_dir, domain)
+            lines = []
+            lines.append('zone "%s" {' % (domain))
+            lines.append('\ttype master;')
+            lines.append('\tfile "%s";' % (zone_filename))
+            lines.append('};\n')
+            fd.write('\n'.join(lines))
+        fd.close()
+
+    def writeSlaveNamedConf(self, filename, zonefile_dir, masters,
+            domains = None):
+        fd = open(filename, 'w')
+        masters_str = '; '.join(masters)
+        masters_str += ';'
+        if domains is None:
+            domains = self.records.keys()
+        for domain in domains:
+            zone_filename = os.path.join(zonefile_dir, domain)
+            lines = []
+            lines.append('zone "%s" {' % (domain))
+            lines.append('\ttype slave;')
+            lines.append('\tfile "%s";' % (zone_filename))
+            lines.append('\tmasters { %s };' % (masters_str))
+            lines.append('};\n')
+            fd.write('\n'.join(lines))
+        fd.close()
+
+def get_valid_networks(networks):
+    networks = [n for n in networks if n.isHost()]
+    if len(networks) != 1:
+        networks = [n for n in networks if not n.attributes.get('secondary', False)]
+    return networks
+
+def is_subdevice(device):
+    if device.parent.class_name == 'device':
+        return True
+    return False
+
+def get_subdevice_parent_hostname(device):
+    while device.parent.class_name == 'device':
+        device = device.parent
+    return device.attributes.get('name', '')
+
+def get_subdevice_path_hostnames(device):
+    ret = []
+    while device.parent.class_name == 'device':
+        ret.insert(0, device.attributes.get('name', ''))
+        device = device.parent
+    return ret
+
+def make_subdevice_hostname(device, subdevice_handler, subdevice_separator):
+    sub_name = device.attributes.get('name', None)
+    if not sub_name:
+        return None
+    if subdevice_handler == 'skip':
+        return None
+    elif subdevice_handler == 'fqdn':
+        return device.attributes.get('name', '')
+    elif subdevice_handler == 'expand-primary':
+        parent_name = get_subdevice_parent_hostname(device)
+        split = parent_name.split('.')
+        if len(split) < 2:
+            return None
+        first = split[0]
+        rest = split[1:]
+        first = subdevice_separator.join(
+                [first] + get_subdevice_path_hostnames(device))
+        ret = '.'.join([first] + rest)
+        return ret
+    return None
+
+def parse_devices(con, dnsrecords, skip_disabled, subdevice_handler,
+        subdevice_separator):
+    for device in con.traverse(include = ['device']):
+        if not device.attributes.get('generate dns', False):
+            continue
+        if skip_disabled and device.attributes.get('disabled', False):
+            continue
+        if is_subdevice(device):
+            hostname = make_subdevice_hostname(device, subdevice_handler,
+                    subdevice_separator)
+            if hostname is None:
+                hostname = ''
+        else:
+            hostname = device.attributes.get('name', '')
+        for network_type in ['ipv4 network', 'ipv6 network']:
+            networks = device.listLinks(include = [network_type])
+            valid_networks = get_valid_networks(networks)
+            num_networks = len(valid_networks)
+            if num_networks == 0:
+                logging.debug('skipping device "%s", no addresses' % (hostname))
+            elif num_networks == 1:
+                try:
+                    if network_type == 'ipv4 network':
+                        a_record = ARecord(hostname, valid_networks[0].strAddress())
+                        ptr_record = PTRRecord(ipv4_reverse(valid_networks[0].strAddress()), hostname)
+                    elif network_type == 'ipv6 network':
+                        a_record = AAAARecord(hostname, valid_networks[0].address.exploded)
+                        ptr_record = IPv6PTRRecord(ipv6_reverse(valid_networks[0].address.exploded), hostname)
+                    dnsrecords.addRecord(a_record)
+                    dnsrecords.addRecord(ptr_record)
+                except DNSGenerationError, e:
+                    logging.debug('skipping device "%s": %s' % (hostname, e))
+            else:
+                logging.debug('skipping device "%s", to many addresses' % (hostname))
+
+def _parse_networks_hostname(con, dnsrecords, network):
+    override = True
+    if network.attributes.get('secondary', False):
+        override = False
+    hostname = network.attributes.get('hostname')
+    address = network.strAddress()
+    try:
+        if network.class_name == 'ipv4 network':
+            a_record = ARecord(hostname, address)
+        elif network.class_name == 'ipv6 network':
+            a_record = AAAARecord(hostname, network.address.exploded)
+        dnsrecords.addRecord(a_record, override = False)
+    except DNSGenerationError, e:
+        logging.debug('skipping network hostname A record "%s": %s' % (address, e))
+    try:
+        if network.class_name == 'ipv4 network':
+            ptr_record = PTRRecord(ipv4_reverse(address), hostname)
+        elif network.class_name == 'ipv6 network':
+            ptr_record = IPv6PTRRecord(ipv6_reverse(network.address.exploded), hostname)
+        dnsrecords.addRecord(ptr_record, override = override)
+    except DNSGenerationError, e:
+        logging.debug('skipping network hostname PTR record "%s": %s' % (address, e))
+
+def _parse_networks_ns(con, dnsrecords, network):
+    if network.class_name != 'ipv4 network':
+        return
+    dst = network.attributes.get('dns-ns')
+    address = network.strAddress()
+    if not network.isHost():
+        split = address.split('.')
+        address = '%s/%s.%s.%s.%s.in-addr.arpa' % (split[3],
+                network.strNetmaskCIDR(), split[2], split[1], split[0])
+    record = NSRecord(address, dst)
+    try:
+        dnsrecords.addRecord(record)
+    except DNSGenerationError, e:
+        logging.debug('skipping network ns "%s": %s' % (address, e))
+
+def _parse_networks_cname(con, dnsrecords, network):
+    cname = network.attributes.get('dns-cname')
+    if network.class_name == 'ipv4 network':
+        address = ipv4_reverse(network.strAddress())
+    elif network.class_name == 'ipv6 network':
+        address = ipv6_reverse(network.address.explode)
+    record = CNAMERecord(address, cname)
+    try:
+        dnsrecords.addRecord(record)
+    except DNSGenerationError, e:
+        logging.debug('skipping network cname "%s": %s' % (address, e))
+
+def parse_networks(con, dnsrecords):
+    for network in con.traverse(include = ['ipv4 network', 'ipv6 network']):
+        if network.attributes.get('hostname'):
+            _parse_networks_hostname(con, dnsrecords, network)
+        elif network.attributes.get('dns-ns'):
+            _parse_networks_ns(con, dnsrecords, network)
+        elif network.attributes.get('dns-cname'):
+            _parse_networks_cname(con, dnsrecords, network)
+
+def get_user_pass(config):
+    username = config.get('siptrack-generate-dns', 'username') or \
+            config.get('DEFAULT', 'username')
+    password = config.get('siptrack-generate-dns', 'password') or \
+            config.get('DEFAULT', 'password')
+    return username, password
+
+def init_logging(config):
+    log_handler = config.get('log-handler', 'syslog')
+    log_level = config.get('log-level', 'info')
+    if log_level == 'info':
+        log_level = logging.INFO
+    elif log_level == 'warning':
+        log_level = logging.WARNING
+    elif log_level == 'debug':
+        log_level = logging.DEBUG
+    else:
+        print 'error: invalid log-level value, must be one of: info, warning, debug'
+        sys.exit(1)
+    logger = logging.getLogger()
+    logger.name = 'siptrack-generate-dns'
+    logger.setLevel(log_level)
+    if log_handler == 'file':
+        log_file = config.get('log-file')
+        if log_file is None:
+            print 'error: invalid log-file value, must be a valid file path'
+            sys.exit(1)
+        handler = logging.FileHandler(filename = log_file)
+        formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+    elif log_handler == 'syslog':
+        handler = logging.handlers.SysLogHandler(address='/dev/log')
+        formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
+    else:
+        print 'error: invalid log-handler value, must be one of: syslog, file'
+        sys.exit(1)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+def pid_is_running(pid):
+    try:
+        os.kill(int(pid), 0)
+    except OSError:
+        return False
+    else:
+        return True
+
+def kill_hung_process(pidfile, pid):
+    start_time = os.stat(pidfile)[stat.ST_MTIME]
+    now = time.time()
+    if (now - start_time) > 3600:
+        logging.info('trying to kill hung process, pid: %s' % (pid))
+        try:
+            os.kill(int(pid), 9)
+        except Exception:
+            pass
+        # give the process a chance to die.
+        time.sleep(5)
+    if not pid_is_running(pid):
+        os.unlink(pidfile)
+
+def create_pid_file(filepath = None):
+    if not filepath:
+        filepath = os.path.expanduser("~/.siptrack-generate-dns.pid")
+    if os.path.exists(filepath):
+        old_pid = open(filepath, 'r').read()
+        if pid_is_running(old_pid):
+            kill_hung_process(filepath, old_pid)
+            if pid_is_running(old_pid):
+                err = 'process already running, pidfile: %s, pid: %s' % (filepath, old_pid)
+                logging.info(err)
+                raise AlreadyRunningError(err)
+        else:
+            os.unlink(filepath)
+    open(filepath, 'w').write(str(os.getpid()))
+
+def remove_pid_file(filepath = None):
+    if not filepath:
+        filepath = os.path.expanduser("~/.siptrack-generate-dns.pid")
+    os.unlink(filepath)
+
+def main():
+    usage = 'usage: %prog [-c config-file] master|slave'
+    parser = OptionParser(usage = usage)
+    parser.add_option('-c', '--config', dest = 'config',
+            help = 'siptrack config file to parse (optional)')
+    (options, args) = parser.parse_args()
+
+    if len(args) != 1 or args[0] not in ['slave', 'master']:
+        print 'error: need to select master or slave mode'
+        parser.print_help()
+        sys.exit(1)
+    runtype = args[0]
+
+    config = siptracklib.config
+    if options.config:
+        config.setConfigFiles(options.config)
+    config.sections = ['GENERATE-DNS']
+
+    init_logging(config)
+
+    if runtype == 'master':
+        required_opts = ['master-named-conf', 'master-zonefile-dir',
+                'template']
+        for opt in required_opts:
+            if not config.get(opt):
+                print 'error: missing required option %s' % (opt)
+                sys.exit(1)
+    if runtype == 'slave':
+        required_opts = ['slave-named-conf', 'slave-zonefile-dir',
+                'slave-masters']
+        for opt in required_opts:
+            if not config.get(opt):
+                print 'error: missing required option %s' % (opt)
+                sys.exit(1)
+
+    if config.get('zonefile-output-dir') and not \
+            os.path.isdir(config.get('zonefile-output-dir')):
+        print 'error: invalid zonefile output directory'
+        sys.exit(1)
+
+    if config.get('template'):
+        if not os.path.isfile(config.get('template')):
+            print 'error: invalid template file'
+            sys.exit(1)
+
+    domains = None
+    if config.get('domains-file'):
+        if not os.path.isfile(config.get('domains-file')):
+            print 'error: invalid domains file'
+            sys.exit(1)
+        domains = [d.strip() for d in open(config.get('domains-file')) \
+                if len(d.strip()) > 0]
+
+    if not config.get('subdevice-handler'):
+        config.set('subdevice-handler', 'expand-primary')
+    elif config.get('subdevice-handler') not in ['fqdn', 'expand-primary', 'skip']:
+        print 'error: invalid subdevice handler, must be one of: fqdn, expand-primary, skip'
+        sys.exit(1)
+
+    if not config.get('subdevice-separator'):
+        config.set('subdevice-separator', '-')
+
+    skip_disabled = False
+    if config.getBool('skip-disabled'):
+        skip_disabled = True
+
+    try:
+        create_pid_file()
+    except AlreadyRunningError, e:
+        print str(e)
+        sys.exit(1)
+
+    dnsrecords = DNSRecords()
+    siptracklib.cm.interactive = False
+    try:
+        config.sections = ['GENERATE-DNS', 'DEFAULT']
+        con = siptracklib.fconnect()
+        config.sections = ['GENERATE-DNS']
+    except siptracklib.errors.SiptrackError, e:
+        print 'error: problem connecting to siptrack server: %s' % (str(e))
+        sys.exit(1)
+    logging.info('starting record generation')
+    con.fetch(-1)
+    parse_devices(con, dnsrecords, skip_disabled,
+            config.get('subdevice-handler'),
+            config.get('subdevice-separator'))
+    parse_networks(con, dnsrecords)
+    if runtype == 'master':
+        dnsrecords.writeZones(config.get('master-zonefile-dir'),
+                config.get('template'), domains)
+        dnsrecords.writeMasterNamedConf(config.get('master-named-conf'),
+                config.get('master-zonefile-dir'), domains)
+    if runtype == 'slave':
+        masters = config.get('slave-masters').split()
+        dnsrecords.writeSlaveNamedConf(config.get('slave-named-conf'),
+                config.get('slave-zonefile-dir'), masters, domains)
+#    dnsrecords.printRecords()
+    siptracklib.cm.disconnect()
+    remove_pid_file()
+
+if __name__ == '__main__':
+    main()
