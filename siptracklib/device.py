@@ -7,6 +7,7 @@ from siptracklib import template
 from siptracklib import confignode
 from siptracklib import permission
 from siptracklib import errors
+from siptracklib import eventlog
 
 class DeviceTree(treenodes.BaseNode):
     class_id = 'DT'
@@ -269,4 +270,5 @@ o.registerChild(password.Password)
 o.registerChild(confignode.ConfigNetworkAutoassign)
 o.registerChild(confignode.ConfigValue)
 o.registerChild(permission.Permission)
+o.registerChild(eventlog.EventLog)
 
