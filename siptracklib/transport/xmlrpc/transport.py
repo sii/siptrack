@@ -22,6 +22,7 @@ from siptracklib.transport.xmlrpc import template
 from siptracklib.transport.xmlrpc import confignode
 from siptracklib.transport.xmlrpc import permission
 from siptracklib.transport.xmlrpc import event
+from siptracklib.transport.xmlrpc import eventlog
 
 transport_class_id_mapping = {
         'CT'  : ['container', 'tree'],
@@ -77,6 +78,8 @@ transport_class_id_mapping = {
         'CQ'   : ['command', 'queue'],
         'ET'   : ['event', 'trigger'],
         'ETRP'   : ['event', 'trigger', 'rule', 'python'],
+        'ELT'   : ['event', 'log', 'tree'],
+        'EL'   : ['event', 'log'],
         }
 
 class Transport(object):
@@ -162,6 +165,8 @@ class Transport(object):
         self.cmd.event.trigger = event.EventTriggerRPC(self)
         self.cmd.event.trigger.rule = event.EventTriggerRuleRPC(self)
         self.cmd.event.trigger.rule.python = event.EventTriggerRulePythonRPC(self)
+        self.cmd.event.log = event.EventLogRPC(self)
+        self.cmd.event.log.tree = event.EventLogTreeRPC(self)
 
     def _sendCommand(self, command, *args):
         """Send a command to the siptrack server, with error handling.
