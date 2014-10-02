@@ -165,8 +165,8 @@ class Transport(object):
         self.cmd.event.trigger = event.EventTriggerRPC(self)
         self.cmd.event.trigger.rule = event.EventTriggerRuleRPC(self)
         self.cmd.event.trigger.rule.python = event.EventTriggerRulePythonRPC(self)
-        self.cmd.event.log = event.EventLogRPC(self)
-        self.cmd.event.log.tree = event.EventLogTreeRPC(self)
+        self.cmd.event.log = eventlog.EventLogRPC(self)
+        self.cmd.event.log.tree = eventlog.EventLogTreeRPC(self)
 
     def _sendCommand(self, command, *args):
         """Send a command to the siptrack server, with error handling.
