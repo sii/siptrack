@@ -11,25 +11,32 @@ class EventLogTree(treenodes.BaseNode):
 class EventLog(treenodes.BaseNode):
     class_id = 'EL'
     class_name = 'event log'
-    class_data_len = 1
+    class_data_len = 2
 
-    def __init__(self, parent, logtext = None):
+    def __init__(self, parent, event_type = None, event_data = None):
         super(EventLog, self).__init__(parent)
-        self._logtext = logtext
+        self._event_type = event_type
+        self._event_data = event_data
 
     def _created(self):
-        self.oid = self.transport.add(self.parent.oid, self._logtext)
+        self.oid = self.transport.add(self.parent.oid, self._event_type, self._event_data)
 
     def _loaded(self, node_data):
         super(EventLog, self)._loaded(node_data)
-        self._logtext = node_data['data'][0]
+        self._event_type = node_data['data'][0]
+        self._event_data = node_data['data'][1]
 
-    def _get_logtext(self):
-        return self._logtext
-
-    def _set_logtext(self, val):
+    def _get_event_type(self):
+        return self._event_type
+    def _set_event_type(self, val):
         raise Exception('event logs are readonly')
-    logtext = property(_get_logtext, _set_logtext)
+    event_type = property(_get_event_type, _set_event_type)
+
+    def _get_event_data(self):
+        return self._event_data
+    def _set_event_data(self, val):
+        raise Exception('event logs are readonly')
+    event_data = property(_get_event_data, _set_event_data)
 
 # Add the objects in this module to the object registry.
 o = object_registry.registerClass(EventLogTree)
