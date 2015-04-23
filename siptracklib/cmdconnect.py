@@ -145,18 +145,33 @@ class UnixConnect(BaseConnect):
                     continue
                 raise
             if remote_fd in rfds:
-                data = os.read(remote_fd, 1024)
-                if len(data) == 0:
-                    return
+                try:
+                    data = os.read(remote_fd, 1024)
+                except OSError, e:
+                    if e.errno != 4: # Interrupted system call
+                        raise
+                else:
+                    if len(data) == 0:
+                        return
                 if not matched_password:
                     matched_password = self._matchSSHPassword(data, passwd,
                             remote_fd)
-                os.write(pty.STDOUT_FILENO, data)
+                try:
+                    os.write(pty.STDOUT_FILENO, data)
+                except OSError, e:
+                    if e.errno != 4: # Interrupted system call
+                        raise
             if pty.STDIN_FILENO in rfds:
-                data = os.read(pty.STDIN_FILENO, 1024)
-                if len(data) == 0:
-                    return
-                self._sshWrite(remote_fd, data)
+                try:
+                    data = os.read(pty.STDIN_FILENO, 1024)
+                except OSError, e:
+                    if e.errno != 4: # Interrupted system call
+                        raise
+                else:
+                    if len(data) == 0:
+                        return
+                if len(data) > 0:
+                    self._sshWrite(remote_fd, data)
 
     def _connectSSH(self, hostname, username, passwd):
         if self.open_new_terminal:
