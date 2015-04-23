@@ -65,8 +65,54 @@ class View(treenodes.BaseNode):
         nt.attributes['name'] = 'ipv6'
         dt = self.add('device tree')
         dt.attributes['name'] = 'default'
-        dt = self.add('password tree')
-        dt.attributes['name'] = 'default'
+        pt = self.add('password tree')
+        pt.attributes['name'] = 'default'
+        pk = pt.add('password key', 'password')
+        pk.attributes['description'] = 'Sample password key, password: password'
+        cnt = self.add('counter')
+        cnt.attributes['name'] = 'server-counter'
+        cnt.attributes['description'] = 'Server counter'
+        cnt.value = 1
+        self._makeServerTemplate(dt)
+        self._makeRackTemplate(dt)
+
+    def _makeServerTemplate(self, dt):
+        tmpl = dt.add('device template', False, None)
+        tmpl.attributes['description'] = 'Sample server template'
+        tmpl.attributes['name'] = 'Server'
+        tmpl.attributes['device_creation'] = True
+        tmpl.add('template rule password', 'admin', 'default user', False)
+        tmpl.add('template rule fixed', 'class', 'server', False, 1)
+        tmpl.add('template rule fixed', 'name', 'server-%04d counter:server-counter', True, 1)
+
+    def _makeRackTemplate(self, dt):
+        # Rack unit
+        unit = dt.add('device template', False, None)
+        unit.attributes['description'] = 'Rack unit subdevice template.'
+        unit.attributes['name'] = 'Rack Unit'
+        unit.attributes['device_creation'] = False
+        unit.add('template rule fixed', 'class', 'rack unit', False, 1)
+        unit.add('template rule fixed', 'name', '%02d sequence:subdevice', True, 1)
+        # Rack units
+        units = dt.add('device template', False, None)
+        units.attributes['description'] = 'Create rack units.'
+        units.attributes['name'] = 'Rack Units'
+        units.attributes['device_creation'] = False
+        units.add('template rule bool', 'reverse-device-sort-order', True, 1)
+        units.add('template rule subdevice', 42, unit, 1)
+        # Rack
+        rack = dt.add('device template', False, [units])
+        rack.attributes['description'] = 'Rack template.'
+        rack.attributes['name'] = 'Rack'
+        rack.attributes['device_creation'] = True
+        rack.add('template rule text', 'name', 1)
+        rack.add('template rule fixed', 'class', 'rack', False, 1)
+
+
+
+
+
+
 
 # Add the objects in this module to the object registry.
 o = object_registry.registerClass(ViewTree)
