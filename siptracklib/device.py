@@ -23,7 +23,7 @@ class DeviceTree(treenodes.BaseNode):
         names = ['ipv4 network', 'ipv6 network']
         if include_ranges:
             names += ['ipv4 network range', 'ipv6 network range']
-        networks = [n for n in self.associations if n.class_name in names]
+        networks = self.listLinks(include=names)
         networks.sort()
         return networks
 
@@ -42,7 +42,7 @@ class DeviceCategory(treenodes.BaseNode):
         names = ['ipv4 network', 'ipv6 network']
         if include_ranges:
             names += ['ipv4 network range', 'ipv6 network range']
-        networks = [n for n in self.associations if n.class_name in names]
+        networks = self.listLinks(include=names)
         networks.sort()
         return networks
 
@@ -68,12 +68,12 @@ class Device(treenodes.BaseNode):
         names = ['ipv4 network']
         if include_ranges:
             names += ['ipv4 network range']
-        ipv4_networks = [n for n in self.associations if n.class_name in names]
+        ipv4_networks = self.listLinks(include=names)
         ipv4_networks.sort()
         names = ['ipv6 network']
         if include_ranges:
             names += ['ipv6 network range']
-        ipv6_networks = [n for n in self.associations if n.class_name in names]
+        ipv6_networks = self.listLinks(include=names)
         ipv6_networks.sort()
         networks = ipv4_networks + ipv6_networks
         return networks
