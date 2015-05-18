@@ -325,6 +325,15 @@ class BaseNode(object):
         self._associations.remove(other.oid)
         other._references.remove(self.oid)
 
+    def unlink(self, other):
+        if self.isAssociated(other):
+            self.disassociate(other)
+        elif other.isAssociated(self):
+            other.disassociate(self)
+        else:
+            raise errors.SiptrackError('not linked: %s' % other)
+        return True
+
     def isAssociated(self, other):
         return self.transport_root.cmd.isAssociated(self.oid, other.oid)
 
