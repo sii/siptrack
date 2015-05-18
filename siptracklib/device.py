@@ -78,6 +78,14 @@ class Device(treenodes.BaseNode):
         networks = ipv4_networks + ipv6_networks
         return networks
 
+    def listInterfaceNetworks(self, include_ranges = True):
+        networks = []
+        for interface in self.listChildren(include=['device']):
+            if not interface.attributes.get('class') == 'interface':
+                continue
+            networks.append((interface, interface.listNetworks(include_ranges)))
+        return networks
+
     def autoassignNetwork(self):
         oid = self.transport.autoassignNetwork(self.oid)
         network = self.root.getOID(oid)
