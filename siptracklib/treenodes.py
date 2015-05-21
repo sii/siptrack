@@ -337,6 +337,13 @@ class BaseNode(object):
     def isAssociated(self, other):
         return self.transport_root.cmd.isAssociated(self.oid, other.oid)
 
+    def isLinked(self, other):
+        ret = True
+        if not self.transport_root.cmd.isAssociated(self.oid, other.oid):
+            if not self.transport_root.cmd.isAssociated(other.oid, self.oid):
+                ret = False
+        return ret
+
     def _get_associations(self):
         for oid in self._associations:
             try:
