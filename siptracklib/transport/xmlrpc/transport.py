@@ -22,6 +22,7 @@ from siptracklib.transport.xmlrpc import template
 from siptracklib.transport.xmlrpc import confignode
 from siptracklib.transport.xmlrpc import permission
 from siptracklib.transport.xmlrpc import event
+from siptracklib.transport.xmlrpc import option
 
 transport_class_id_mapping = {
         'CT'  : ['container', 'tree'],
@@ -31,6 +32,10 @@ transport_class_id_mapping = {
         'DT'  : ['device', 'tree'],
         'DC'  : ['device', 'category'],
         'D'   : ['device'],
+        'OT'  : ['option', 'tree'],
+        'OC'  : ['option', 'category'],
+        'OV'  : ['option', 'value'],
+        'O'   : ['option'],
         'TMPL'  : ['template'],
         'DTMPL'  : ['template', 'device'],
         'NTMPL'  : ['template', 'network'],
@@ -129,6 +134,10 @@ class Transport(object):
         self.cmd.password.subkey = password.SubKeyRPC(self)
         self.cmd.password.tree = password.PasswordTreeRPC(self)
         self.cmd.password.category = password.PasswordCategoryRPC(self)
+        self.cmd.option = user.OptionRPC(self)
+        self.cmd.option.tree = user.OptionTreeRPC(self)
+        self.cmd.option.category = user.OptionCategoryRPC(self)
+        self.cmd.option.value = user.OptionValueRPC(self)
         self.cmd.user = user.UserRPC(self)
         self.cmd.user.local = user.UserLocalRPC(self)
         self.cmd.user.ldap = user.UserLDAPRPC(self)
