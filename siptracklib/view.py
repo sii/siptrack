@@ -10,6 +10,7 @@ from siptracklib import user
 from siptracklib import confignode
 from siptracklib import permission
 from siptracklib import event
+from siptracklib import option
 
 class ViewTree(treenodes.BaseNode):
     """A view tree, contains a list of view.
@@ -126,6 +127,7 @@ o.registerChild(confignode.ConfigValue)
 o.registerChild(permission.Permission)
 o.registerChild(event.CommandQueue)
 o.registerChild(event.EventTrigger)
+o.registerChild(option.OptionTree)
 
 o = object_registry.registerClass(View)
 o.registerChild(container.ContainerTree)
