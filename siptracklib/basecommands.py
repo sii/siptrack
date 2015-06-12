@@ -249,7 +249,7 @@ class cmd_json_dump_tree(Command):
         data = []
         for depth, node in self.view_tree.traverse(include_depth = True):
             data.append(node.dictDescribe())
-            cprint(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
+        cprint(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
         return 0
 
 class cmd_connect(Command):
