@@ -252,6 +252,32 @@ class cmd_json_dump_tree(Command):
         cprint(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
         return 0
 
+class cmd_cmp_json_dumps(Command):
+    """Compare two dumped json trees."""
+
+    arguments = [
+        Argument('file1',
+            help = 'JSON dump file.'),
+        Argument('file2',
+            help = 'JSON dump file.'),
+    ]
+
+    def run(self, file1, file2):
+        import json
+        import time
+        data_1 = json.loads(open(file1, 'r').read())
+        oids_1 = {n['oid']: n for n in data_1}
+        data_2 = json.loads(open(file2, 'r').read())
+        oids_2 = {n['oid']: n for n in data_2}
+        print len(oids_1), len(oids_2)
+        for oid, node in oids_1.iteritems():
+            if oid not in oids_2:
+                print 'IN 1', oid, node['cls'], time.ctime(node['ctime'])
+        for oid, node in oids_2.iteritems():
+            if oid not in oids_1:
+                print 'IN 2', oid, node['cls'], time.ctime(node['ctime'])
+        return 0
+
 class cmd_connect(Command):
     """SSH/RDP connection to a device."""
     connected = True
