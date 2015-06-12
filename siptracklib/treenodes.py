@@ -187,6 +187,20 @@ class BaseNode(object):
         return '%s:%s:%s' % (self.class_name, self.oid,
                 self.attributes.get('name'))
 
+    def dictDescribe(self):
+        """Return a dict representation of this node."""
+        parent_oid = ''
+        if self.parent and hasattr(self.parent, 'oid'):
+            parent_oid = self.parent.oid
+        data = {'oid': self.oid,
+                'cls': self.class_name,
+                'parent': parent_oid,
+                'ctime': self.ctime,
+                'associations': self._associations,
+                'references': self._references,
+               }
+        return data
+
     def __lt__(self, other):
         if not isinstance(other, BaseNode):
             return False

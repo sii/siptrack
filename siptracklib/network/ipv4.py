@@ -247,6 +247,11 @@ class Network(treenodes.BaseNode):
     def describe(self):
         return '%s:%s:%s' % (self.class_name, self.oid, self.address)
 
+    def dictDescribe(self):
+        data = super(Network, self).dictDescribe()
+        data['address'] = str(self.address)
+        return data
+
     def _created(self):
         if self.address is None:
             raise errors.SiptrackError('invalid address in network object')

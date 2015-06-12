@@ -53,6 +53,13 @@ class Attribute(treenodes.BaseNode):
             return '%s:%s:%s:%s' % (self.class_name, self.oid, self.name,
                     self.atype)
 
+    def dictDescribe(self):
+        data = super(Attribute, self).dictDescribe()
+        data['name'] = self.name
+        data['atype'] = self.atype
+#        data['value'] = self.value
+        return data
+
     def getParentNode(self):
         """Get the closest parent _non-attribute_ node."""
         parent = self
@@ -136,6 +143,13 @@ class VersionedAttribute(treenodes.BaseNode):
         else:
             return '%s:%s:%s:%s' % (self.class_name, self.oid, self.name,
                     self.atype)
+
+    def dictDescribe(self):
+        data = super(VersionedAttribute, self).dictDescribe()
+        data['name'] = self.name
+        data['atype'] = self.atype
+#        data['value'] = self.value
+        return data
 
     def getParentNode(self):
         """Get the closest parent _non-attribute_ node."""

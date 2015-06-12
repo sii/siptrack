@@ -19,6 +19,11 @@ class NetworkTree(treenodes.BaseNode):
         super(NetworkTree, self).__init__(parent)
         self.protocol = protocol
 
+    def dictDescribe(self):
+        data = super(NetworkTree, self).dictDescribe()
+        data['protocol'] = self.protocol
+        return data
+
     def _created(self):
         if self.protocol == None:
             raise errors.SiptrackError('invalid protocol in network tree')

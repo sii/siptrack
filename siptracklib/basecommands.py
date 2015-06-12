@@ -240,6 +240,18 @@ class cmd_list_tree(Command):
 
         return 0
 
+class cmd_json_dump_tree(Command):
+    """Dump a json representation of the whole object tree."""
+
+    def run(self):
+        import json
+        self.view_tree.fetch(max_depth = -1)
+        data = []
+        for depth, node in self.view_tree.traverse(include_depth = True):
+            data.append(node.dictDescribe())
+            cprint(json.dumps(data, sort_keys=True, indent=4, separators=(',', ': ')))
+        return 0
+
 class cmd_connect(Command):
     """SSH/RDP connection to a device."""
     connected = True
