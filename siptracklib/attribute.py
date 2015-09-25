@@ -54,10 +54,16 @@ class Attribute(treenodes.BaseNode):
                     self.atype)
 
     def dictDescribe(self):
+        import hashlib
         data = super(Attribute, self).dictDescribe()
         data['name'] = self.name
         data['atype'] = self.atype
-#        data['value'] = self.value
+        v = self.value
+        if type(v) in [int, long, bool]:
+            v = str(v)
+        elif type(v) == unicode:
+            v = v.encode('utf-8')
+        data['value'] = hashlib.md5(v).hexdigest()
         return data
 
     def getParentNode(self):
@@ -145,10 +151,16 @@ class VersionedAttribute(treenodes.BaseNode):
                     self.atype)
 
     def dictDescribe(self):
+        import hashlib
         data = super(VersionedAttribute, self).dictDescribe()
         data['name'] = self.name
         data['atype'] = self.atype
-#        data['value'] = self.value
+        v = self.value
+        if type(v) in [int, long, bool]:
+            v = str(v)
+        elif type(v) == unicode:
+            v = v.encode('utf-8')
+        data['value'] = hashlib.md5(v).hexdigest()
         return data
 
     def getParentNode(self):
