@@ -32,6 +32,7 @@ transport_class_id_mapping = {
         'DT'  : ['device', 'tree'],
         'DC'  : ['device', 'category'],
         'DCON'  : ['device', 'config'],
+        'DCTMPL'  : ['device', 'config', 'template'],
         'D'   : ['device'],
         'TMPL'  : ['template'],
         'DTMPL'  : ['template', 'device'],
@@ -112,6 +113,7 @@ class Transport(object):
         self.cmd.device.tree = device.DeviceTreeRPC(self)
         self.cmd.device.category = device.DeviceCategoryRPC(self)
         self.cmd.device.config = deviceconfig.DeviceConfigRPC(self)
+        self.cmd.device.config.template = deviceconfig.DeviceConfigTemplateRPC(self)
         self.cmd.template = template.TemplateRPC(self)
         self.cmd.template.device = template.DeviceTemplateRPC(self)
         self.cmd.template.network = template.NetworkTemplateRPC(self)

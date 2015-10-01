@@ -279,4 +279,5 @@ o.registerChild(confignode.ConfigNetworkAutoassign)
 o.registerChild(confignode.ConfigValue)
 o.registerChild(permission.Permission)
 o.registerChild(deviceconfig.DeviceConfig)
+o.registerChild(deviceconfig.DeviceConfigTemplate)
 

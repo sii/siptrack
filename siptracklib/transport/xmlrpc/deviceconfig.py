@@ -30,3 +30,21 @@ class DeviceConfigRPC(baserpc.BaseRPC):
             for data, timestamp in res:
                 ret.append([str(data), timestamp])
         return ret
+
+class DeviceConfigTemplateRPC(baserpc.BaseRPC):
+    command_path = 'device.config.template'
+
+    def add(self, parent_oid, template):
+        return self.send('add', parent_oid, self.transport._makeBinary(template))
+
+    def setTemplate(self, oid, template):
+        return self.send('set_template', oid, self.transport._makeBinary(template))
+
+    def getTemplate(self, oid):
+        ret = self.send('get_template', oid)
+        return str(ret)
+
+    def expand(self, oid, keywords):
+        ret = self.send('expand', oid, keywords)
+        return str(ret)
+

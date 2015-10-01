@@ -48,8 +48,40 @@ class DeviceConfig(treenodes.BaseNode):
     def getAllConfigs(self):
         return self.transport.getAllConfigs(self.oid)
 
+class DeviceConfigTemplate(treenodes.BaseNode):
+    class_id = 'DCTMPL'
+    class_name = 'device config template'
+    class_data_len = 0
+
+    def __init__(self, parent, template = None):
+        super(DeviceConfigTemplate, self).__init__(parent)
+        self._template = template
+
+    def _loaded(self, node_data):
+        super(DeviceConfigTemplate, self)._loaded(node_data)
+
+    def _created(self):
+        """Called when an object has been newly created."""
+        self.oid = self.transport.add(self.parent.oid, self._template)
+
+    def _get_template(self):
+        return self.transport.getTemplate(self.oid)
+
+    def _set_template(self, template):
+        self.transport.setTemplate(self.oid, template)
+        self._template = template
+    template = property(_get_template, _set_template)
+
+    def expand(self, keywords = {}):
+        return self.transport.expand(self.oid, keywords)
+
 # Add the objects in this module to the object registry.
 o = object_registry.registerClass(DeviceConfig)
+o.registerChild(attribute.Attribute)
+o.registerChild(attribute.VersionedAttribute)
+o.registerChild(permission.Permission)
+
+o = object_registry.registerClass(DeviceConfigTemplate)
 o.registerChild(attribute.Attribute)
 o.registerChild(attribute.VersionedAttribute)
 o.registerChild(permission.Permission)
