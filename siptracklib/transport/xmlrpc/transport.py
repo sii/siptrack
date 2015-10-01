@@ -22,6 +22,7 @@ from siptracklib.transport.xmlrpc import template
 from siptracklib.transport.xmlrpc import confignode
 from siptracklib.transport.xmlrpc import permission
 from siptracklib.transport.xmlrpc import event
+from siptracklib.transport.xmlrpc import deviceconfig
 
 transport_class_id_mapping = {
         'CT'  : ['container', 'tree'],
@@ -30,6 +31,7 @@ transport_class_id_mapping = {
         'CNTLOOP' : ['counter', 'loop'],
         'DT'  : ['device', 'tree'],
         'DC'  : ['device', 'category'],
+        'DCON'  : ['device', 'config'],
         'D'   : ['device'],
         'TMPL'  : ['template'],
         'DTMPL'  : ['template', 'device'],
@@ -109,6 +111,7 @@ class Transport(object):
         self.cmd.device = device.DeviceRPC(self)
         self.cmd.device.tree = device.DeviceTreeRPC(self)
         self.cmd.device.category = device.DeviceCategoryRPC(self)
+        self.cmd.device.config = deviceconfig.DeviceConfigRPC(self)
         self.cmd.template = template.TemplateRPC(self)
         self.cmd.template.device = template.DeviceTemplateRPC(self)
         self.cmd.template.network = template.NetworkTemplateRPC(self)

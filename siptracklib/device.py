@@ -5,6 +5,7 @@ from siptracklib import password
 from siptracklib import counter
 from siptracklib import template
 from siptracklib import confignode
+from siptracklib import deviceconfig
 from siptracklib import permission
 from siptracklib import errors
 
@@ -277,4 +278,5 @@ o.registerChild(password.Password)
 o.registerChild(confignode.ConfigNetworkAutoassign)
 o.registerChild(confignode.ConfigValue)
 o.registerChild(permission.Permission)
+o.registerChild(deviceconfig.DeviceConfig)
 
