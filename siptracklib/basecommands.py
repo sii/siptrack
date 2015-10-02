@@ -471,3 +471,38 @@ class cmd_get_device_config(Command):
         print res
         return 0
 
+class cmd_submit_device_config(Command):
+    """Submit a device configuration. Reads data from stdin."""
+    connected = True
+    aliases = []
+    arguments = [
+        Argument('device_name',
+            help = 'The device.'),
+        Argument('config_name',
+            help = 'Configuration name.'),
+    ]
+
+    def _getSTDINData(self):
+        ret = ''
+        for data in sys.stdin.read():
+            ret += data
+        return ret
+
+    def run(self, device_name, config_name):
+        devices = self.object_store.search(device_name, include=['device'])
+        if len(devices) == 0:
+            raise errors.SiptrackError('no devices matched')
+        if len(devices) > 1:
+            raise errors.SiptrackError('matched to many devices')
+        device = devices[0]
+        match = None
+        for config in device.listChildren(include=['device config']):
+            if config.name == config_name:
+                match = config
+                break
+        if not match:
+            config = device.add('device config', config_name, 50)
+        data = self._getSTDINData()
+        config.addConfig(data)
+        return 0
+
