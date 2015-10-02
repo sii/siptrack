@@ -31,6 +31,15 @@ class DeviceConfigRPC(baserpc.BaseRPC):
                 ret.append([str(data), timestamp])
         return ret
 
+    def getTimestampConfig(self, oid, timestamp):
+        ret = self.send('get_timestamp_config', oid, timestamp)
+        if ret is not False:
+            ret = str(ret)
+        return ret
+
+    def getStats(self, oid):
+        return self.send('get_stats', oid)
+
 class DeviceConfigTemplateRPC(baserpc.BaseRPC):
     command_path = 'device.config.template'
 

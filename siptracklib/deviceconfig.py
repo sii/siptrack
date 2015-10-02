@@ -48,6 +48,12 @@ class DeviceConfig(treenodes.BaseNode):
     def getAllConfigs(self):
         return self.transport.getAllConfigs(self.oid)
 
+    def getTimestampConfig(self, timestamp):
+        return self.transport.getTimestampConfig(self.oid, timestamp)
+
+    def getStats(self):
+        return self.transport.getStats(self.oid)
+
 class DeviceConfigTemplate(treenodes.BaseNode):
     class_id = 'DCTMPL'
     class_name = 'device config template'
