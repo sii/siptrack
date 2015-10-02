@@ -431,3 +431,43 @@ class cmd_copy_password_clipboard(Command):
 
         return 0
 
+class cmd_get_device_config(Command):
+    """Get a device configuration."""
+    connected = True
+    aliases = []
+    arguments = [
+        Argument('device_name',
+            help = 'The device.'),
+        Argument('config_name',
+            help = 'Configuration name.'),
+    ]
+    options = [
+        Option('timestamp', 't', take_argument = True,
+                help = 'Fetch config for a specific timestamp, otherwise fetches latest'),
+    ]
+
+    def run(self, device_name, config_name, timestamp = None):
+        devices = self.object_store.search(device_name, include=['device'])
+        if len(devices) == 0:
+            raise errors.SiptrackError('no devices matched')
+        if len(devices) > 1:
+            raise errors.SiptrackError('matched to many devices')
+        device = devices[0]
+        match = None
+        for config in device.listChildren(include=['device config']):
+            if config.name == config_name:
+                match = config
+                break
+        if not match:
+            raise errors.SiptrackError('matched device but no config with that name found')
+        if timestamp:
+            res = config.getTimestampConfig(int(timestamp))
+        else:
+            res = config.getLatestConfig()
+            if res:
+                res, _ = res
+        if not res:
+            raise errors.SiptrackError('no config data submitted')
+        print res
+        return 0
+
