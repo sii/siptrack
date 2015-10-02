@@ -78,7 +78,9 @@ class DeviceConfigTemplate(treenodes.BaseNode):
         self._template = template
     template = property(_get_template, _set_template)
 
-    def expand(self, keywords = {}):
+    def expand(self, keywords = None):
+        if not keywords:
+            keywords = {}
         return self.transport.expand(self.oid, keywords)
 
 # Add the objects in this module to the object registry.
