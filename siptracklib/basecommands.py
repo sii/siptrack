@@ -266,9 +266,15 @@ class cmd_cmp_json_dumps(Command):
         import json
         import time
         data_1 = json.loads(open(file1, 'r').read())
-        oids_1 = {n['oid']: n for n in data_1}
+        oids_1 = {}
+        for n in data_1:
+            oids_1[n['oid']] = n
+#        oids_1 = {n['oid']: n for n in data_1}
         data_2 = json.loads(open(file2, 'r').read())
-        oids_2 = {n['oid']: n for n in data_2}
+        oids_2 = {}
+        for n in data_2:
+            oids_2[n['oid']] = n
+#        oids_2 = {n['oid']: n for n in data_2}
         print len(oids_1), len(oids_2)
         for oid, node in oids_1.iteritems():
             if oid not in oids_2:
