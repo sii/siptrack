@@ -453,7 +453,7 @@ class cmd_get_device_config(Command):
     ]
 
     def run(self, device_name, config_name, timestamp = None):
-        devices = self.object_store.search(device_name, include=['device'])
+        devices = self.object_store.search(device_name, include=['device'], attr_limit=['name'])
         if len(devices) == 0:
             raise errors.SiptrackError('no devices matched')
         if len(devices) > 1:
@@ -495,7 +495,7 @@ class cmd_submit_device_config(Command):
         return ret
 
     def run(self, device_name, config_name):
-        devices = self.object_store.search(device_name, include=['device'])
+        devices = self.object_store.search(device_name, include=['device'], attr_limit=['name'])
         if len(devices) == 0:
             raise errors.SiptrackError('no devices matched')
         if len(devices) > 1:
