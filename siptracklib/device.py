@@ -65,26 +65,39 @@ class Device(treenodes.BaseNode):
         self.transport.delete(self.oid, prune_networks)
         self._purge()
 
-    def listNetworks(self, include_ranges = True):
+    def listNetworks(self, include_ranges = True, include_interfaces=False, only_hosts=False):
         names = ['ipv4 network']
         if include_ranges:
             names += ['ipv4 network range']
         ipv4_networks = self.listLinks(include=names)
+        if only_hosts:
+            ipv4_networks = [n for n in ipv4_networks if n.isHost()]
         ipv4_networks.sort()
         names = ['ipv6 network']
         if include_ranges:
             names += ['ipv6 network range']
         ipv6_networks = self.listLinks(include=names)
+        if only_hosts:
+            ipv6_networks = [n for n in ipv6_networks if n.isHost()]
         ipv6_networks.sort()
-        networks = ipv4_networks + ipv6_networks
+        interface_networks = []
+        if include_interfaces:
+            interface_networks = self.listInterfaceNetworks(include_ranges,
+                    include_interface=False, only_hosts=only_hosts)
+        networks = ipv4_networks + ipv6_networks + interface_networks
         return networks
 
-    def listInterfaceNetworks(self, include_ranges = True):
+    def listInterfaceNetworks(self, include_ranges = True, only_hosts=False,
+            include_interface=True):
         networks = []
         for interface in self.listChildren(include=['device']):
             if not interface.attributes.get('class') == 'interface':
                 continue
-            networks.append((interface, interface.listNetworks(include_ranges)))
+            intf_networks = interface.listNetworks(include_ranges, include_interfaces=False, only_hosts=only_hosts)
+            if include_interface:
+                networks.append((interface, intf_networks))
+            else:
+                networks += intf_networks
         return networks
 
     def autoassignNetwork(self):
