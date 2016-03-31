@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+"""Module for connecting to devices using ssh and rdp."""
 
 import sys
 import subprocess
@@ -30,36 +30,13 @@ else:
     import tty
     import signal
 
-def select_device_username(device, usernames):
-    match = None
-    passwords = device.listChildren(include = ['password'])
-    device_usernames = [p.attributes.get('username') for p in passwords]
-    for username in usernames:
-        if username in device_usernames:
-            match = username
-            break
-    if not match:
-        if len(device_usernames) == 1:
-            match = device_usernames[0]
-        elif len(device_usernames) > 1:
-            print 'No default usernames matched, select username to use.'
-            options = []
-            options.append(utils.PicklistOption('Abort.', None))
-            for password in passwords:
-                if len(password.attributes.get('description', '')) == 0:
-                    optionstr = password.attributes.get('username', '')
-                else:
-                    optionstr = '%s - %s' % (
-                            password.attributes.get('username', ''),
-                            password.attributes.get('description', ''))
-                option = utils.PicklistOption(optionstr,
-                        password.attributes.get('username'))
-                options.append(option)
-            match = utils.pick_from_list(options, 'Username').value
-            print match
-    return match
 
 class BaseConnect(object):
+    """Base connection class.
+    
+    The connection classes are used to perform connection _from_ systems
+    of the class type.
+    """
     rdp_console = False
 
     def _checkTCPPort(self, hostname, port, timeout = 2):
@@ -72,41 +49,27 @@ class BaseConnect(object):
         sd.close()
         return True
 
-    def _getDeviceInfo(self, device, username):
-        hostname = device.attributes.get('name')
+    def connect(self, device, username, password, hostname):
         host_os = device.attributes.get('os')
-        password = None
-        for child in device.listChildren(include = ['password']):
-            if child.attributes.get('username') == username:
-                password = child.password
-        if password is None:
-            raise errors.SiptrackError('no password for user %s found' % (username))
-        password = password.rstrip('\n')
-        return hostname, host_os, password
-
-    def connect(self, device, username):
-        hostname, host_os, password = self._getDeviceInfo(device, username)
         if host_os == 'linux':
-            print 'trying ssh connection to %s@%s with password %s' % (username, hostname, password)
+            print 'Trying ssh connection to %s@%s with password %s' % (username, hostname, password)
             self._connectSSH(hostname, username, password)
         elif host_os == 'windows':
-            print 'trying rdp connection to %s@%s with password %s' % (username, hostname, password)
+            print 'Trying rdp connection to %s@%s with password %s' % (username, hostname, password)
             self._connectRDP(hostname, username, password)
         else:
             if self._checkTCPPort(hostname, 3389):
-                print 'trying rdp connection to %s@%s with password %s' % (username, hostname, password)
+                print 'Trying rdp connection to %s@%s with password %s' % (username, hostname, password)
                 self._connectRDP(hostname, username, password)
             elif self._checkTCPPort(hostname, 22):
-                print 'trying ssh connection to %s@%s with password %s' % (username, hostname, password)
+                print 'Trying ssh connection to %s@%s with password %s' % (username, hostname, password)
                 self._connectSSH(hostname, username, password)
             else:
-                raise errors.SiptrackError('sorry, I don\'t know how to connect to this device')
+                raise errors.SiptrackError('Sorry, I don\'t know how to connect to this device')
 
-    def setPasswordClipboard(self, device, username):
-        hostname, host_os, password = self._getDeviceInfo(device, username)
-        self._addPasswordToClipboard(password)
 
 class UnixConnect(BaseConnect):
+    """Class for performing connection when on a unix-like system."""
     clipboard_progs = ['/usr/bin/xclip', '/usr/bin/pbcopy']
     clipboard_bin = None
     use_clipboard = True
@@ -115,6 +78,22 @@ class UnixConnect(BaseConnect):
     ssh_extraopt = None
     open_new_terminal = False
     rdp_extraopt = None
+
+    def __init__(self, config):
+        if config:
+            if config.getBool('open-new-terminal', False) is not None:
+                self.open_new_terminal = config.getBool('open-new-terminal', False)
+            self.rdp_extraopt = config.get('rdp-extraopt')
+            if config.get('terminal-bin', False):
+                self.terminal_bin = config.get('terminal-bin')
+            if config.get('ssh-bin', False):
+                self.ssh_bin = config.get('ssh-bin')
+            if config.get('ssh-extraopt', False):
+                self.ssh_extraopt = config.get('ssh-extraopt')
+            if config.get('clipboard-bin', False):
+                self.clipboard_bin = config.get('clipboard-bin')
+            if config.getBool('use-clipboard', None) is not None:
+                self.use_clipboard = config.getBool('use-clipboard')
 
     def _sshWrite(self, fd, data):
         while data != '':
@@ -185,7 +164,7 @@ class UnixConnect(BaseConnect):
         siptrack_bin = sys.argv[0]
         sshcmd = [self.terminal_bin, '-e', siptrack_bin, 'connect-fork',
                 username, hostname, str(os.getpid()), self.ssh_bin]
-        self._addPasswordToClipboard(passwd)
+        self.addStringToClipboard(passwd)
         subprocess.call(sshcmd, env = sshenv)
 
     def _setRemoteTTYSize(self, tty):
@@ -199,7 +178,7 @@ class UnixConnect(BaseConnect):
         sshcmd = [self.ssh_bin, '%s@%s' % (username, hostname)]
         if self.ssh_extraopt:
             sshcmd += self.ssh_extraopt.split()
-        self._addPasswordToClipboard(passwd)
+        self.addStringToClipboard(passwd)
         pid, self.remote_fd = pty.fork()
         if pid == pty.CHILD:
             os.execlp(sshcmd[0], *sshcmd)
@@ -232,7 +211,7 @@ class UnixConnect(BaseConnect):
         if self.rdp_extraopt:
             rdpcmd += self.rdp_extraopt.split()
         rdpcmd += [hostname]
-        self._addPasswordToClipboard(passwd)
+        self.addStringToClipboard(passwd)
         subprocess.Popen(rdpcmd)
 
     def _selectClipboardProg(self):
@@ -243,7 +222,7 @@ class UnixConnect(BaseConnect):
                 self.clipboard_bin = prog
                 return
 
-    def _addPasswordToClipboard(self, passwd):
+    def addStringToClipboard(self, string):
         if not self.use_clipboard:
             return
         self._selectClipboardProg()
@@ -253,7 +232,7 @@ class UnixConnect(BaseConnect):
         # This might fail if we have no xserver etc.
         try:
             pipe = subprocess.Popen(cmd, stdin=subprocess.PIPE).stdin
-            pipe.write(passwd)
+            pipe.write(string)
             pipe.close()
         except Exception, e:
             pass
@@ -261,7 +240,9 @@ class UnixConnect(BaseConnect):
     def _setTerminalTitle(self, title):
         print '\033]0;%s\007' % (title)
 
+
 class Win32Connect(BaseConnect):
+    """Class for performing connections when on a win32 system."""
     _registry_rdp_key = 'Software\\Microsoft\\Terminal Server Client\\LocalDevices'
     win32_ssh_bin = None
     win32_ssh_pwopt = None
@@ -269,6 +250,16 @@ class Win32Connect(BaseConnect):
     win32_rdp_addreg = None
     win32_rdp_cfgtmpl = None
     use_clipboard = True
+
+    def __init__(self, config):
+        if config:
+            self.win32_ssh_bin = config.get('win32-ssh-bin')
+            self.win32_ssh_pwopt = config.get('win32-ssh-pwopt')
+            self.win32_ssh_extraopt = config.get('win32-ssh-extraopt')
+            self.win32_rdp_addreg = config.get('win32-rdp-addreg')
+            self.win32_rdp_cfgtmpl = config.get('win32-rdp-config-template')
+            if config.getBool('use-clipboard', None) is not None:
+                self.use_clipboard = config.get('use-clipboard')
 
     def _connectSSH(self, hostname, username, password):
         if not self.win32_ssh_bin:
@@ -283,7 +274,7 @@ class Win32Connect(BaseConnect):
             sshcmd.append(password)
         if self.win32_ssh_extraopt:
             sshcmd += self.win32_ssh_extraopt.split()
-        self._addPasswordToClipboard(password)
+        self.addStringToClipboard(password)
         subprocess.Popen(sshcmd)
 
     def _connectRDP(self, hostname, username, password):
@@ -293,7 +284,7 @@ class Win32Connect(BaseConnect):
             rdpcmd.append('/console')
         if self.win32_rdp_addreg:
             self._addDeviceToRegistry(hostname)
-        self._addPasswordToClipboard(password)
+        self.addStringToClipboard(password)
         subprocess.Popen(rdpcmd)
         time.sleep(5)
         os.unlink(config_file)
@@ -340,85 +331,198 @@ class Win32Connect(BaseConnect):
         else:
             key.Close()
 
-    def _addPasswordToClipboard(self, passwd):
+    def addStringToClipboard(self, string):
         if not self.use_clipboard:
             return
         win32clipboard.OpenClipboard()
         win32clipboard.EmptyClipboard()
-        win32clipboard.SetClipboardData(win32clipboard.CF_TEXT, passwd)
+        win32clipboard.SetClipboardData(win32clipboard.CF_TEXT, string)
         win32clipboard.CloseClipboard()
 
+
 def get_connection_class(config):
+    """Select the connection class based on the system plattform."""
     if sys.platform == 'win32':
-        connection = Win32Connect()
-        if config:
-            connection.win32_ssh_bin = config.get('win32-ssh-bin')
-            connection.win32_ssh_pwopt = config.get('win32-ssh-pwopt')
-            connection.win32_ssh_extraopt = config.get('win32-ssh-extraopt')
-            connection.win32_rdp_addreg = config.get('win32-rdp-addreg')
-            connection.win32_rdp_cfgtmpl = config.get('win32-rdp-config-template')
-            if config.getBool('use-clipboard', None) is not None:
-                connection.use_clipboard = config.get('use-clipboard')
+        connection = Win32Connect(config)
     else:
-        connection = UnixConnect()
-        if config:
-            if config.getBool('open-new-terminal', False) is not None:
-                connection.open_new_terminal = config.getBool('open-new-terminal', False)
-            connection.rdp_extraopt = config.get('rdp-extraopt')
-            if config.get('terminal-bin', False):
-                connection.terminal_bin = config.get('terminal-bin')
-            if config.get('ssh-bin', False):
-                connection.ssh_bin = config.get('ssh-bin')
-            if config.get('ssh-extraopt', False):
-                connection.ssh_extraopt = config.get('ssh-extraopt')
-            if config.get('clipboard-bin', False):
-                connection.clipboard_bin = config.get('clipboard-bin')
-            if config.getBool('use-clipboard', None) is not None:
-                connection.use_clipboard = config.getBool('use-clipboard')
+        connection = UnixConnect(config)
     return connection
 
-def get_device_and_user(st, devicename, search_all, quick_search, config, config_sections):
-    username = None
-    username_in_cmdline = False
-    if '@' in devicename:
-        try:
-            username, devicename = devicename.split('@')
-            usernames = [username]
-            username_in_cmdline = True
-        except ValueError:
-            raise errors.SiptrackError('invalid devicename')
 
-    config.sections = config_sections
-    if username is None:
-        username = config.get('default-username')
-        if username is None:
-            raise errors.SiptrackError('no username supplied, set default-username in config or give username\non command-line')
-        usernames = username.strip().split()
+def select_device_password(device, usernames, services):
+    """Select a password object from a device based a list of usernames.
+    
+    If a single match is found that will be used, otherwise the user
+    is prompted to make a selection.
+    """
+    match = None
+    all_passwords = device.listChildren(include = ['password'])
+    if not all_passwords:
+        return None
+    matched_u_and_s = []
+    matched_u = []
+    matched_s = []
+    for password in all_passwords:
+        username = password.attributes.get('username')
+        service = password.attributes.get('description')
+        if username in usernames and (not service or service in services):
+            matched_u_and_s.append(password)
+        if username in usernames:
+            matched_u.append(password)
+        if service in services:
+            matched_s.append(password)
+    matched_passwords = matched_u_and_s or matched_u or matched_s
+    if not matched_passwords:
+        matched_passwords = all_passwords
+    if len(matched_passwords) == 1:
+        ret = matched_passwords[0]
+    else:
+        options = []
+        options.append(utils.PicklistOption('Abort', None))
+        for password in matched_passwords:
+            username = password.attributes.get('username', '')
+            description = password.attributes.get('description')
+            if username and description:
+                optionstr = '%s - %s' % (username, description)
+            elif username:
+                optionstr = username
+            elif description:
+                optionstr = description
+            else:
+                optionstr = 'Unknown password %s' % password.oid
+            option = utils.PicklistOption(optionstr, password)
+            options.append(option)
+        ret = utils.pick_from_list(options, 'Password').value
+        if ret is None:
+            sys.exit(1)
+    return ret
+
+
+def select_device_hostname_or_ip(device, config):
+    """Return the hostname/ip used for connecting to a device.
+    
+    If the config option connect-ip is set we try to find a valid
+    ip-address to connect to, otherwise the device name is used.
+    """
+    hostname = None
+    if config.getBool('connect-ip', False):
+        networks = device.listNetworks(include_ranges=False,
+                include_interfaces=True, only_hosts=True)
+        networks = [n.strAddress() for n in networks if not n.attributes.get('secondary', False)]
+        if len(networks) == 1:
+            hostname = networks[0]
+        elif len(networks) > 1:
+            options = [utils.PicklistOption(n)  for n in networks]
+            hostname = utils.pick_from_list(options, 'Select IP').option
+    if not hostname:
+        hostname = device.attributes.get('name')
+    return hostname
+
+
+def get_device(st, hostname, search_all, quick_search):
+    """Get a device object matching the hostname and search params."""
     attr_limit = []
     if not search_all:
         attr_limit = ['name']
-    devices = utils.search_device(st, devicename, attr_limit, quick_search, max_results = 50)
+    devices = utils.search_device(st, hostname,
+            attr_limit, quick_search, max_results = 50)
     devices.sort()
     device = utils.select_device_from_list(devices)
-    username = select_device_username(device, usernames)
+    return device
+
+
+def get_username_list(cmdline_username, config):
+    """Get a list of possible usernames.
+
+    Usernames are select from the command line and the config file.
+    """
+    usernames = []
+    if cmdline_username:
+        usernames = [cmdline_username]
+    else:
+        username = config.get('default-username')
+        if username:
+            usernames = username.strip().split()
+    return usernames
+
+
+def get_username_service_list(config):
+    """Get a list of username services for password matching.
+
+    This can only be set in the config file.
+    """
+    services = []
+    service = config.get('default-username-service')
+    if service:
+        services = service.strip().split(',')
+    return services
+
+
+def get_username_and_password(device, cmdline_username, config):
+    """Get a username and a password for device.
+
+    The username and password are selected from user input,
+    config files and device information.
+    """
+    username_list = get_username_list(cmdline_username, config)
+    service_list = get_username_service_list(config)
+    password = select_device_password(device, username_list, service_list)
+    username = None
+    if password and password.attributes.get('username'):
+        username = password.attributes.get('username')
+        password = password.password
     if not username:
-        raise errors.SiptrackError('no matching username found for device')
-    if username_in_cmdline and username != usernames[0]:
-        raise errors.SiptrackError('no matching username found for device')
-    return (device, username)
+        if len(username_list) == 0:
+            username = None
+            while not username:
+                username = utils.read_response('Enter username')
+        elif len(username_list) == 1:
+            username = username_list[0]
+        else:
+            options = [utils.PicklistOption(u) for u in username_list]
+            username = utils.pick_from_list(options, 'Select username').option
+    if not password:
+        password = utils.read_password(verify=False)
+    return username, password
+
+
+def split_devicename(devicename):
+    """Split a [username@]hostname string.
+
+    If there is no @ in the string it will be considered a hostname
+    only.
+    """
+    username = None
+    hostname = devicename
+    if '@' in devicename:
+        try:
+            username, hostname = devicename.split('@')
+        except ValueError:
+            raise errors.SiptrackError('invalid devicename')
+    return username, hostname
+
 
 def cmd_connect(st, devicename, search_all, quick_search, console, config):
-    device, username = get_device_and_user(st, devicename, search_all, quick_search,
-                                           config, ['STCONNECT', 'DEFAULT'])
+    """Entry point for the connect command."""
+    config.sections = ['STCONNECT', 'DEFAULT']
+    cmdline_username, hostname = split_devicename(devicename)
+    device = get_device(st, hostname, search_all, quick_search)
+    username, password = get_username_and_password(device, cmdline_username, config)
+    hostname_or_ip = select_device_hostname_or_ip(device, config)
     connection = get_connection_class(config)
     connection.rdp_console = console
-    connection.connect(device, username)
+    connection.connect(device, username, password, hostname_or_ip)
+
 
 def cmd_copy_password_clipboard(st, devicename, search_all, quick_search, config):
-    device, username = get_device_and_user(st, devicename, search_all, quick_search,
-                                           config, ['STCONNECT', 'DEFAULT'])
+    """Entry point for the copy_password_clipboard command."""
+    config.sections = ['STCONNECT', 'DEFAULT']
+    cmdline_username, hostname = split_devicename(devicename)
+    device = get_device(st, hostname, search_all, quick_search)
+    username, password = get_username_and_password(device, cmdline_username, config)
     connection = get_connection_class(config)
-    connection.setPasswordClipboard(device, username)
+    connection.addStringToClipboard(password)
+
 
 def cmd_connect_fork(username, hostname, caller_pid, ssh_bin):
     """Called when connect is starting a ssh connection in a new terminal.
