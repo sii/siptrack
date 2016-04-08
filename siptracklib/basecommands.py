@@ -125,7 +125,7 @@ class cmd_grep(Command):
             print
 
     def _displayNetworks(self, device):
-        networks = [str(network) for network in device.listNetworks()]
+        networks = [str(network) for network in device.listNetworks(include_ranges=False, include_interfaces=True)]
         if len(networks) > 0:
             cprint('IP-addresses:')
             cprint('  %s' % (' '.join(networks)))
