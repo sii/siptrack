@@ -1,3 +1,5 @@
+from bisect import bisect_left
+
 from siptracklib.objectregistry import object_registry
 from siptracklib import treenodes
 from siptracklib import attribute
@@ -10,6 +12,14 @@ class BaseUserManager(treenodes.BaseNode):
 
     def listGroups(self):
         return self.listChildren(include = ['user group', 'user group ldap', 'user group active directory'])
+
+    def getUserByName(self, username):
+        """
+        Return list of users matching username.
+
+        Example: user_manager.getUserByName('stemid')[0].username
+        """
+        return [x for x in self.listUsers() if x.username == username]
 
 class UserManagerLocal(BaseUserManager):
     class_id = 'UM'
