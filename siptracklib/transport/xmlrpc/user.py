@@ -93,6 +93,9 @@ class UserManagerActiveDirectoryRPC(baserpc.BaseRPC):
     def setValidGroups(self, oid, valid_groups):
         return self.send('set_valid_groups', oid, valid_groups)
 
+    def setUserDomain(self, oid, user_domain):
+        return self.send('set_user_domain', oid, user_domain)
+
 class UserGroupRPC(baserpc.BaseRPC):
     command_path = 'user.group'
 
