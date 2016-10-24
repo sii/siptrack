@@ -75,6 +75,10 @@ class PasswordKey(treenodes.BaseNode):
     def changeKey(self, new_key):
         self.transport.changeKey(self.oid, new_key)
 
+    def isValidPassword(self, test_password):
+        self.transport.isValidPassword(self.oid, test_password)
+
+
 class SubKey(treenodes.BaseNode):
     class_id = 'SK'
     class_name = 'sub key'

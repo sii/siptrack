@@ -33,6 +33,10 @@ class PasswordKeyRPC(baserpc.BaseRPC):
     def changeKey(self, oid, new_key):
         return self.send('change_key', oid, new_key)
 
+    def isValidPassword(self, pk_oid, test_password):
+        return self.send('is_valid_password', pk_oid, test_password)
+
+
 class SubKeyRPC(baserpc.BaseRPC):
     command_path = 'password.subkey'
 
