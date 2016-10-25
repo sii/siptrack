@@ -33,6 +33,9 @@ class RootRPC(baserpc.BaseRPC):
     def sessionUserOID(self):
         return self.send('session_user_oid')
 
+    def sessionUserPasswordHasChanged(self, password):
+        return self.send('session_user_password_has_changed', password)
+
     def oidExists(self, oid):
         return self.send('oid_exists', oid)
 
