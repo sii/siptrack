@@ -103,6 +103,7 @@ class Transport(object):
         self.username = None
         self.password = None
         self.debug = False
+        self.password_has_changed = False
 
         self.cmd = root.RootRPC(self)
         self.cmd.container = container.ContainerRPC(self)
@@ -255,6 +256,8 @@ class Transport(object):
                 if self.username is None or self.password is None:
                     raise siptracklib.errors.InvalidLoginError()
                 self.cmd.login(self.username, self.password)
+                self.password_has_changed = \
+                        self.cmd.sessionUserPasswordHasChanged(self.password)
         except socket.error, e:
             raise SiptrackError('Unable to connect to siptrack server: %s' % (
                 e.args[1]))
