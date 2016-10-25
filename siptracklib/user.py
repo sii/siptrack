@@ -139,7 +139,7 @@ class UserManagerActiveDirectory(BaseUserManager):
         self.valid_groups = valid_groups
 
     def setUserDomain(self, user_domain):
-        self.transport.setValidGroups(self.oid, user_domain)
+        self.transport.setUserDomain(self.oid, user_domain)
         self.user_domain = user_domain
 
 class BaseUserGroup(treenodes.BaseNode):
