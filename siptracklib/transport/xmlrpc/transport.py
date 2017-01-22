@@ -72,6 +72,7 @@ transport_class_id_mapping = {
         'IP6NR'  : ['network', 'range', 'ipv6'],
         'CA'  : ['attribute'],
         'VA'  : ['attribute', 'versioned'],
+        'ENCA': ['attribute', 'encrypted'],
         'CFGS'  : ['config', 'section'],
         'CFGNETAUTO'  : ['config', 'network_autoassign'],
         'CFGVALUE'  : ['config', 'value'],
@@ -157,6 +158,7 @@ class Transport(object):
         self.cmd.network.range.ipv6 = network.NetworkRangeIPV6RPC(self)
         self.cmd.attribute = attribute.AttributeRPC(self)
         self.cmd.attribute.versioned = attribute.VersionedAttributeRPC(self)
+        self.cmd.attribute.encrypted = attribute.EncryptedAttributeRPC(self)
         self.cmd.config = confignode.ConfigRPC(self)
         self.cmd.config.section = confignode.ConfigSectionRPC(self)
         self.cmd.config.network_autoassign = confignode.ConfigNetworkAutoassignRPC(self)

@@ -582,9 +582,16 @@ class AttributeDict(object):
         # DO NOT SET SORTED = True.
         # Since sorting lists the compared objects attributes this will
         # result in a whole lot of sorting..
-        return self.real.listChildren(fetch = False,
-                include = ['attribute', 'versioned attribute'],
-                sorted = False)
+        local_types = [
+            'attribute',
+            'versioned attribute',
+            'encrypted attribute'
+        ]
+        return self.real.listChildren(
+            fetch = False,
+            include = local_types,
+            sorted = False
+        )
 
     def __getitem__(self, item):
         for attr in self._listAttributes():

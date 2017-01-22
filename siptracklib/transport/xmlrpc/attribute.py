@@ -21,3 +21,11 @@ class VersionedAttributeRPC(baserpc.BaseRPC):
     def setValue(self, oid, value):
         return self.send('set_value', oid, value)
 
+class EncryptedAttributeRPC(baserpc.BaseRPC):
+    command_path = 'attribute.encrypted'
+
+    def add(self, parent_oid, name, atype, value):
+        return self.send('add', parent_oid, name, atype, value)
+
+    def setValue(self, oid, value):
+        return self.send('set_value', oid, value)

@@ -143,6 +143,7 @@ o.registerChild(PasswordCategory)
 o = object_registry.registerClass(Password)
 o.registerChild(attribute.Attribute)
 o.registerChild(attribute.VersionedAttribute)
+o.registerChild(attribute.EncryptedAttribute)
 
 o = object_registry.registerClass(PasswordKey)
 o.registerChild(attribute.Attribute)
