@@ -135,8 +135,7 @@ class VersionedAttribute(AttributeBase):
             parent,
             name,
             atype,
-            value,
-            max_versions
+            value
         )
 
         self.max_versions = max_versions
