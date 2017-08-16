@@ -65,6 +65,8 @@ class View(treenodes.BaseNode):
         nt.attributes['name'] = 'ipv6'
         dt = self.add('device tree')
         dt.attributes['name'] = 'default'
+        ct = self.add('ci tree')
+        ct.attributes['name'] = 'default'
         pt = self.add('password tree')
         pt.attributes['name'] = 'default'
         pk = pt.add('password key', 'password')
