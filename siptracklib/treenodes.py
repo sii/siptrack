@@ -494,8 +494,8 @@ class BaseNode(object):
 
     def getChildByAttribute(self, attribute, value, include = [], exclude = []):
         for node in self.listChildren(include = include, exclude = exclude):
-            if attribute in node.attributes._listAttributes():
-                if node.attributes.get(attribute) == value:
+            for _attr in node.attributes._listAttributes():
+                if attribute == _attr.name and value == _attr.value:
                     return node
 
     def getChildByName(self, name, include = [], exclude = []):
