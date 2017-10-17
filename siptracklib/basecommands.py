@@ -20,6 +20,8 @@ converted to underscores before being sent to the run method.
 # check if inbound arguments are regular strings, and convert them to unicode
 # if they are, and it's necessary.
 
+from __future__ import print_function
+
 import os
 import sys
 import subprocess
@@ -111,7 +113,7 @@ class cmd_grep(Command):
         Option('regexp', 'r', take_argument = False,
                 help = 'Use regexp search, slower (automatically used with -a).'),
         Option('max-results', 'm', take_argument = True,
-                help = 'Max returned results, default 50.'),
+                help = 'Max returned results, default 500.'),
     ]
 
     def _displayAttributes(self, device, show_hidden):
@@ -150,18 +152,18 @@ class cmd_grep(Command):
             l_username, l_description, l_password = self._calcPasswordColumnWidths(passwords)
             sep_str = '  +%s+%s+%s+' % ('-' * l_username, '-' * l_description, '-' * l_password)
             out_str_fmt = '  |%%-%ds|%%-%ds|%%-%ds|' % (l_username, l_description, l_password)
-            print 'Passwords:'
-            print sep_str
-            print out_str_fmt % ('username', 'description',
-                    'password')
-            print sep_str
+            print('Passwords:')
+            print(sep_str)
+            print(out_str_fmt % ('username', 'description',
+                    'password'))
+            print(sep_str)
             for password in passwords:
-                print out_str_fmt % (
+                print(out_str_fmt % (
                         password.attributes.get('username', ''),
                         password.attributes.get('description', ''),
-                        password.password)
-            print sep_str
-            print
+                        password.password))
+            print(sep_str)
+            print()
 
     def _displayUserPassword(self, username, device):
         passwords = list(device.listChildren(include = ['password']))
@@ -169,7 +171,7 @@ class cmd_grep(Command):
             raise errors.SiptrackError('matched to many passwords')
         for password in passwords:
             if password.attributes.get('username') == username:
-                print password.password
+                print(password.password)
                 break
 
     def _displayAssociatedDevices(self, device):
@@ -187,7 +189,7 @@ class cmd_grep(Command):
                 cprint('  %15s: %s' % (node.attributes.get('class', ' - '),
                     ' / '.join(names)))
 
-            print
+            print()
     
     def _displayDisabled(self, device):
         if device.attributes.get('disabled', False) is True:
@@ -275,13 +277,13 @@ class cmd_cmp_json_dumps(Command):
         for n in data_2:
             oids_2[n['oid']] = n
 #        oids_2 = {n['oid']: n for n in data_2}
-        print len(oids_1), len(oids_2)
+        print(len(oids_1), len(oids_2))
         for oid, node in oids_1.iteritems():
             if oid not in oids_2:
-                print 'IN 1', oid, node['cls'], time.ctime(node['ctime'])
+                print('IN 1', oid, node['cls'], time.ctime(node['ctime']))
         for oid, node in oids_2.iteritems():
             if oid not in oids_1:
-                print 'IN 2', oid, node['cls'], time.ctime(node['ctime'])
+                print('IN 2', oid, node['cls'], time.ctime(node['ctime']))
         return 0
 
 class cmd_connect(Command):
@@ -376,7 +378,7 @@ class cmd_edit_config(Command):
     def _callEdit(self, editor_paths):
         editor = self._getEditor(editor_paths)
         if not editor:
-            print 'No editor found.'
+            print('No editor found.')
             return
         editorcmd = [editor, utils.get_user_config_file()]
         subprocess.Popen(editorcmd)
@@ -393,7 +395,7 @@ class cmd_show_config(Command):
     connected = False
 
     def run(self):
-        print ' '.join(utils.get_default_config_files())
+        print(' '.join(utils.get_default_config_files()))
 
         return 0
 
@@ -411,7 +413,7 @@ class cmd_show_config_var(Command):
     ]
 
     def run(self, variable, section = 'DEFAULT'):
-        print self.cm.config.get(variable, sections = [section])
+        print(self.cm.config.get(variable, sections = [section]))
         return 0
 
 class cmd_copy_password_clipboard(Command):
@@ -474,7 +476,7 @@ class cmd_get_device_config(Command):
                 res, _ = res
         if not res:
             raise errors.SiptrackError('no config data submitted')
-        print res
+        print(res)
         return 0
 
 class cmd_submit_device_config(Command):
@@ -512,3 +514,44 @@ class cmd_submit_device_config(Command):
         config.addConfig(data)
         return 0
 
+
+class cmd_list(Command):
+    """List devices."""
+
+    aliases = []
+    arguments = [
+        Argument('searchstring', help = 'Searchstring.'),
+    ]
+    options = [
+        Option('search-all', 'a', take_argument = False,
+                help = 'Search all attributes and networks (default is to only search devices names).'),
+        Option('regexp', 'r', take_argument = False,
+                help = 'Use regexp search, slower (automatically used with -a).'),
+        Option('max-results', 'm', take_argument = True,
+                help = 'Max returned results, default 500.'),
+    ]
+
+
+    def run(self, searchstring, **kw):
+        search_all = kw.get('search_all', False)
+        regexp = kw.get('regexp', False)
+        max_results = kw.get('max_results', 500)
+
+        attr_limit = []
+        if not search_all:
+            attr_limit = ['name']
+        else:
+            regexp = True
+
+        devices = utils.search_device(
+            self.object_store,
+            searchstring,
+            attr_limit,
+            regexp,
+            max_results
+        )
+
+        for device in devices:
+            print('{device_name}'.format(
+                device_name=device.attributes.get('name', '[UNNAMED]')
+            ))
