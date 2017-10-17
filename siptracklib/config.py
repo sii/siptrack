@@ -11,7 +11,6 @@ default_options = {
         'session-filename': utils.get_default_session_filename(),
         'transport': 'default',
         'use-ssl': True,
-        'verbose': False,
         }
 
 class SiptrackConfig(object):
