@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import siptracklib
 import siptracklib.root
 import siptracklib.config
@@ -48,8 +50,15 @@ class ConnectionManager(object):
 
         if self.config.getBool('retain-session', False) and \
                 prev_session_id != new_session_id:
-            utils.write_session_id(self.config.get('session-filename'),
-                    new_session_id)
+
+            session_filename = self.config.get('session-filename')
+            if session_filename.startswith('~'):
+                session_filename = os.path.expanduser(session_filename)
+
+            utils.write_session_id(
+                session_filename,
+                new_session_id
+            )
 
         object_store = siptracklib.root.ObjectStore(self.transport)
         return object_store
