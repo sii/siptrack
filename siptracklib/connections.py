@@ -19,6 +19,10 @@ class ConnectionManager(object):
         self.interactive = interactive
 
     def connect(self):
+        session_filename = self.config.get('session-filename')
+        if session_filename.startswith('~'):
+            session_filename = os.path.expanduser(session_filename)
+
         if not self.config.getInt('port'):
             if self.config.getBool('use-ssl', False):
                 self.config.set('port', siptracklib.default_ssl_port)
@@ -34,7 +38,7 @@ class ConnectionManager(object):
         connected = False
         if self.config.getBool('retain-session', False):
             prev_session_id = utils.read_session_id(
-                    self.config.get('session-filename'))
+                    session_filename)
             if prev_session_id:
                 try:
                     new_session_id = self.transport.connect(
