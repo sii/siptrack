@@ -1,0 +1,39 @@
+image: python:2.7-stretch
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+
+stages:
+  - build
+  - test
+
+
+cache:
+  paths:
+    - .cache/pip
+    - builds
+
+
+before_script:
+  - python -V
+
+
+install_package:
+  stage: build
+  script:
+    - python setup.py install
+
+  only:
+    - master
+
+
+test_install:
+  stage: test
+  script:
+    - python setup.py install
+    - test -x /usr/bin/siptrack
+    - test -x /usr/bin/siptrack-generate-dns
+
+  only:
+    - master
