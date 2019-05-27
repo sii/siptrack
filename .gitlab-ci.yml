@@ -32,8 +32,8 @@ test_install:
   stage: test
   script:
     - python setup.py install
-    - test -x /usr/bin/siptrack
-    - test -x /usr/bin/siptrack-generate-dns
+    - test -x /usr/local/bin/siptrack
+    - test -x /usr/local/bin/siptrack-generate-dns
 
   only:
     - master
