@@ -27,7 +27,7 @@ class ObjectStore(object):
         return self._getOID(oid)
 
     def getOIDs(self, oids):
-        if type(oids) != list:
+        if not isinstance(oids, list):
             oids = [oids]
         missing = [oid for oid in oids if not self._getOID(oid)]
         if len(missing) > 0:

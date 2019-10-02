@@ -55,7 +55,7 @@ class AttributeBase(treenodes.BaseNode):
         v = self.value
         if type(v) in [int, long, bool]:
             v = str(v)
-        elif type(v) == unicode:
+        elif isinstance(v, unicode):
             v = v.encode('utf-8')
         data['value'] = hashlib.md5(v).hexdigest()
         return data

@@ -16,7 +16,7 @@ def dotted_quad_to_num(network):
     The number is returned in host byte order.
     """
     try:
-        return long(struct.unpack('>L',socket.inet_aton(network))[0])
+        return long(struct.unpack('>L', socket.inet_aton(network))[0])
     except socket.error, e:
         raise errors.SiptrackError('%s' % e)
 
@@ -272,8 +272,7 @@ class Network(treenodes.BaseNode):
         if include_missing:
             children = self.listChildren(include = ['ipv4 network'])
             missing = self.findMissingNetworks()
-            all = list(children) + list(missing)
-            all.sort()
+            all = sorted(list(children) + list(missing))
             return iter(all)
         else:
             return self.listChildren(include = ['ipv4 network'])
@@ -588,7 +587,7 @@ def address_from_string(address, mask = True, validate = True):
 
     If an Address object is passed in it is returned untouched.
     """
-    if type(address) == Address:
+    if isinstance(address, Address):
         return address
     # Make sure it's not confused with a range.
     if ' ' in address:
@@ -618,7 +617,7 @@ def range_from_string(range):
 
     If a Range object is passed in it is returned untouched.
     """
-    if type(range) == Range:
+    if isinstance(range, Range):
         return range
     split = range.split()
     if len(split) != 2:

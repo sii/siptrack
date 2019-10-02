@@ -152,8 +152,7 @@ def traverse_tree_reverse(root, include_root):
 def traverse_list(entries, filter = None, sorted = False):
     """Walk a list using the given filter (if any)."""
     if sorted:
-        entries = list(entries)
-        entries.sort()
+        entries = sorted(entries)
     if filter == None:
         filter = filter_include
     for ent in entries:
@@ -621,9 +620,9 @@ class AttributeDict(object):
             if len(value) != 2:
                 raise errors.SiptrackError('invalid attribute dict access')
             atype, value = value
-        elif type(value) == bool:
+        elif isinstance(value, bool):
             atype = 'bool'
-        elif type(value) == int:
+        elif isinstance(value, int):
             atype = 'int'
         attr_exists = False
         for attr in self._listAttributes():

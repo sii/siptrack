@@ -24,8 +24,7 @@ class DeviceTree(treenodes.BaseNode):
         names = ['ipv4 network', 'ipv6 network']
         if include_ranges:
             names += ['ipv4 network range', 'ipv6 network range']
-        networks = self.listLinks(include=names)
-        networks.sort()
+        networks = sorted(self.listLinks(include=names))
         return networks
 
 class DeviceCategory(treenodes.BaseNode):
@@ -43,8 +42,7 @@ class DeviceCategory(treenodes.BaseNode):
         names = ['ipv4 network', 'ipv6 network']
         if include_ranges:
             names += ['ipv4 network range', 'ipv6 network range']
-        networks = self.listLinks(include=names)
-        networks.sort()
+        networks = sorted(self.listLinks(include=names))
         return networks
 
 class Device(treenodes.BaseNode):

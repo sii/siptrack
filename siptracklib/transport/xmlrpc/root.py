@@ -1,5 +1,5 @@
 from siptracklib.transport.xmlrpc import baserpc
-import xmlrpclib
+import xmlrpc.client
 import zlib
 try:
     import simplejson

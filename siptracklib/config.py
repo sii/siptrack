@@ -45,7 +45,7 @@ class SiptrackConfig(object):
 
     def getBool(self, option, default = None, sections = None):
         value = self.get(option, default, sections)
-        if type(value) == bool:
+        if isinstance(value, bool):
             pass
         elif type(value) in [str, unicode]:
             if value.lower() in ['true', '1']:

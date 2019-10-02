@@ -37,8 +37,7 @@ class NetworkTree(treenodes.BaseNode):
         children = self.listChildren(include = ['%s network' % (self.protocol)])
         if include_missing:
             missing = self.findMissingNetworks()
-            all = list(children) + list(missing)
-            all.sort()
+            all = sorted(list(children) + list(missing))
             children = iter(all)
         return children
 

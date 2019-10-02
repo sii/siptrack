@@ -2,7 +2,7 @@
 
 Used for communicating with siptrack servers via xmlrpc.
 """
-import xmlrpclib
+import xmlrpc.client
 import socket
 import time
 
@@ -25,62 +25,62 @@ from siptracklib.transport.xmlrpc import event
 from siptracklib.transport.xmlrpc import deviceconfig
 
 transport_class_id_mapping = {
-        'CT'  : ['container', 'tree'],
-        'C'   : ['container'],
-        'CNT' : ['counter'],
-        'CNTLOOP' : ['counter', 'loop'],
-        'DT'  : ['device', 'tree'],
-        'DC'  : ['device', 'category'],
-        'DCON'  : ['device', 'config'],
-        'DCTMPL'  : ['device', 'config', 'template'],
-        'D'   : ['device'],
-        'TMPL'  : ['template'],
-        'DTMPL'  : ['template', 'device'],
-        'NTMPL'  : ['template', 'network'],
-        'TMPLRULE'  : ['template', 'rule'],     # Nothing actually exists here..
-        'TMPLRULEPASSWORD'  : ['template', 'rule', 'password'],
-        'TMPLRULEASSIGNNET'  : ['template', 'rule', 'assign_network'],
-        'TMPLRULESUBDEV'  : ['template', 'rule', 'subdevice'],
-        'TMPLRULETEXT'  : ['template', 'rule', 'text'],
-        'TMPLRULEFIXED'  : ['template', 'rule', 'fixed'],
-        'TMPLRULEREGMATCH'  : ['template', 'rule', 'regmatch'],
-        'TMPLRULEBOOL'  : ['template', 'rule', 'bool'],
-        'TMPLRULEINT'  : ['template', 'rule', 'int'],
-        'TMPLRULEDELATTR'  : ['template', 'rule', 'delete_attribute'],
-        'TMPLRULEFLUSHNODES'  : ['template', 'rule', 'flush_nodes'],
-        'TMPLRULEFLUSHASSOC'  : ['template', 'rule', 'flush_associations'],
-        'P'   : ['password'],
-        'PK'  : ['password', 'key'],
-        'SK'  : ['password', 'subkey'],
-        'PT'  : ['password', 'tree'],
-        'PC'  : ['password', 'category'],
-        'U'   : ['user', 'local'],
-        'UL'  : ['user', 'ldap'],
-        'UAD'  : ['user', 'ad'],
-        'UM'  : ['user', 'manager', 'local'],
-        'UML' : ['user', 'manager', 'ldap'],
-        'UMAD' : ['user', 'manager', 'ad'],
-        'UG'  : ['user', 'group'],
-        'UGL'  : ['user', 'group', 'ldap'],
-        'UGAD'  : ['user', 'group', 'ad'],
-        'VT'  : ['view', 'tree'],
-        'V'   : ['view'],
-        'NT'  : ['network', 'tree'],
-        'IP4N'  : ['network', 'ipv4'],
-        'IP4NR'  : ['network', 'range', 'ipv4'],
-        'IP6N'  : ['network', 'ipv6'],
-        'IP6NR'  : ['network', 'range', 'ipv6'],
-        'CA'  : ['attribute'],
-        'VA'  : ['attribute', 'versioned'],
+        'CT': ['container', 'tree'],
+        'C': ['container'],
+        'CNT': ['counter'],
+        'CNTLOOP': ['counter', 'loop'],
+        'DT': ['device', 'tree'],
+        'DC': ['device', 'category'],
+        'DCON': ['device', 'config'],
+        'DCTMPL': ['device', 'config', 'template'],
+        'D': ['device'],
+        'TMPL': ['template'],
+        'DTMPL': ['template', 'device'],
+        'NTMPL': ['template', 'network'],
+        'TMPLRULE': ['template', 'rule'],     # Nothing actually exists here..
+        'TMPLRULEPASSWORD': ['template', 'rule', 'password'],
+        'TMPLRULEASSIGNNET': ['template', 'rule', 'assign_network'],
+        'TMPLRULESUBDEV': ['template', 'rule', 'subdevice'],
+        'TMPLRULETEXT': ['template', 'rule', 'text'],
+        'TMPLRULEFIXED': ['template', 'rule', 'fixed'],
+        'TMPLRULEREGMATCH': ['template', 'rule', 'regmatch'],
+        'TMPLRULEBOOL': ['template', 'rule', 'bool'],
+        'TMPLRULEINT': ['template', 'rule', 'int'],
+        'TMPLRULEDELATTR': ['template', 'rule', 'delete_attribute'],
+        'TMPLRULEFLUSHNODES': ['template', 'rule', 'flush_nodes'],
+        'TMPLRULEFLUSHASSOC': ['template', 'rule', 'flush_associations'],
+        'P': ['password'],
+        'PK': ['password', 'key'],
+        'SK': ['password', 'subkey'],
+        'PT': ['password', 'tree'],
+        'PC': ['password', 'category'],
+        'U': ['user', 'local'],
+        'UL': ['user', 'ldap'],
+        'UAD': ['user', 'ad'],
+        'UM': ['user', 'manager', 'local'],
+        'UML': ['user', 'manager', 'ldap'],
+        'UMAD': ['user', 'manager', 'ad'],
+        'UG': ['user', 'group'],
+        'UGL': ['user', 'group', 'ldap'],
+        'UGAD': ['user', 'group', 'ad'],
+        'VT': ['view', 'tree'],
+        'V': ['view'],
+        'NT': ['network', 'tree'],
+        'IP4N': ['network', 'ipv4'],
+        'IP4NR': ['network', 'range', 'ipv4'],
+        'IP6N': ['network', 'ipv6'],
+        'IP6NR': ['network', 'range', 'ipv6'],
+        'CA': ['attribute'],
+        'VA': ['attribute', 'versioned'],
         'ENCA': ['attribute', 'encrypted'],
-        'CFGS'  : ['config', 'section'],
-        'CFGNETAUTO'  : ['config', 'network_autoassign'],
-        'CFGVALUE'  : ['config', 'value'],
-        'PERM'   : ['permission'],
-        'C'   : ['command'],
-        'CQ'   : ['command', 'queue'],
-        'ET'   : ['event', 'trigger'],
-        'ETRP'   : ['event', 'trigger', 'rule', 'python'],
+        'CFGS': ['config', 'section'],
+        'CFGNETAUTO': ['config', 'network_autoassign'],
+        'CFGVALUE': ['config', 'value'],
+        'PERM': ['permission'],
+        'C': ['command'],
+        'CQ': ['command', 'queue'],
+        'ET': ['event', 'trigger'],
+        'ETRP': ['event', 'trigger', 'rule', 'python'],
         }
 
 class Transport(object):
@@ -187,9 +187,9 @@ class Transport(object):
             ret = getattr(self._connection, command)(*args)
             end = time.time()
             if self.debug:
-                print 'RPC CALL %s: %s' % (command, end - start)
+                print('RPC CALL %s: %s' % (command, end - start))
             return ret
-        except xmlrpclib.Fault, e:
+        except xmlrpc.client.Fault as e:
             faultcode = e.faultCode
             faultstring = e.faultString
             # Generic error.
@@ -246,7 +246,7 @@ class Transport(object):
         else:
             scheme = 'http'
         connect_string = '%s://%s:%s/' % (scheme, self.hostname, self.port)
-        self._connection = xmlrpclib.ServerProxy(connect_string)
+        self._connection = xmlrpc.client.ServerProxy(connect_string)
         try:
             if session_id:
                 self.session_id = session_id
@@ -260,10 +260,10 @@ class Transport(object):
                 self.cmd.login(self.username, self.password)
                 self.password_has_changed = \
                         self.cmd.sessionUserPasswordHasChanged(self.password)
-        except socket.error, e:
+        except socket.error as e:
             raise SiptrackError('Unable to connect to siptrack server: %s' % (
                 e.args[1]))
-        except socket.gaierror, e:
+        except socket.gaierror as e:
             raise SiptrackError('Unable to connect to siptrack server: %s' % (
                 e.args[1]))
         return self.session_id
@@ -284,5 +284,5 @@ class Transport(object):
 
     def _makeBinary(self, string):
         """Create a binary object for sending with xmlrpclib."""
-        return xmlrpclib.Binary(string)
+        return xmlrpc.client.Binary(string)
 

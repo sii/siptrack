@@ -12,7 +12,7 @@ import siptracklib.errors
 
 IPV6_PTR_DOMAIN_LEN = 8 # == /32 boundry
 
-class DNSGenerationError(StandardError):
+class DNSGenerationError(Exception):
     pass
 
 class ValidationError(DNSGenerationError):
@@ -186,9 +186,9 @@ class DNSRecords(object):
 
     def printRecords(self):
         for domain in self.records:
-            print 'DOMAIN', domain
+            print('DOMAIN', domain)
             for record in self.records[domain]:
-                print 'RECORD', record
+                print('RECORD', record)
 
     def addRecord(self, record, override = False):
         self._add(record, override)
@@ -218,14 +218,14 @@ class DNSRecords(object):
 
     def writeZones(self, output_dir, template = None, domains = None):
         if domains is None:
-            domains = self.records.keys()
+            domains = list(self.records.keys())
         for domain in domains:
             self.writeZone(output_dir, domain, template)
 
     def writeMasterNamedConf(self, filename, zonefile_dir, domains = None):
         fd = open(filename, 'w')
         if domains is None:
-            domains = self.records.keys()
+            domains = list(self.records.keys())
         for domain in domains:
             zone_filename = os.path.join(zonefile_dir, domain)
             lines = []
@@ -242,7 +242,7 @@ class DNSRecords(object):
         masters_str = '; '.join(masters)
         masters_str += ';'
         if domains is None:
-            domains = self.records.keys()
+            domains = list(self.records.keys())
         for domain in domains:
             zone_filename = os.path.join(zonefile_dir, domain)
             lines = []
@@ -328,7 +328,7 @@ def parse_devices(con, dnsrecords, skip_disabled, subdevice_handler,
                         ptr_record = IPv6PTRRecord(ipv6_reverse(valid_networks[0].address.exploded), hostname)
                     dnsrecords.addRecord(a_record)
                     dnsrecords.addRecord(ptr_record)
-                except DNSGenerationError, e:
+                except DNSGenerationError as e:
                     logging.debug('skipping device "%s": %s' % (hostname, e))
             else:
                 logging.debug('skipping device "%s", to many addresses' % (hostname))
@@ -345,7 +345,7 @@ def _parse_networks_hostname(con, dnsrecords, network):
         elif network.class_name == 'ipv6 network':
             a_record = AAAARecord(hostname, network.address.exploded)
         dnsrecords.addRecord(a_record, override = False)
-    except DNSGenerationError, e:
+    except DNSGenerationError as e:
         logging.debug('skipping network hostname A record "%s": %s' % (address, e))
     try:
         if network.class_name == 'ipv4 network':
@@ -353,7 +353,7 @@ def _parse_networks_hostname(con, dnsrecords, network):
         elif network.class_name == 'ipv6 network':
             ptr_record = IPv6PTRRecord(ipv6_reverse(network.address.exploded), hostname)
         dnsrecords.addRecord(ptr_record, override = override)
-    except DNSGenerationError, e:
+    except DNSGenerationError as e:
         logging.debug('skipping network hostname PTR record "%s": %s' % (address, e))
 
 def _parse_networks_ns(con, dnsrecords, network):
@@ -368,7 +368,7 @@ def _parse_networks_ns(con, dnsrecords, network):
     record = NSRecord(address, dst)
     try:
         dnsrecords.addRecord(record)
-    except DNSGenerationError, e:
+    except DNSGenerationError as e:
         logging.debug('skipping network ns "%s": %s' % (address, e))
 
 def _parse_networks_cname(con, dnsrecords, network):
@@ -380,7 +380,7 @@ def _parse_networks_cname(con, dnsrecords, network):
     record = CNAMERecord(address, cname)
     try:
         dnsrecords.addRecord(record)
-    except DNSGenerationError, e:
+    except DNSGenerationError as e:
         logging.debug('skipping network cname "%s": %s' % (address, e))
 
 def parse_networks(con, dnsrecords):
@@ -409,7 +409,7 @@ def init_logging(config):
     elif log_level == 'debug':
         log_level = logging.DEBUG
     else:
-        print 'error: invalid log-level value, must be one of: info, warning, debug'
+        print('error: invalid log-level value, must be one of: info, warning, debug')
         sys.exit(1)
     logger = logging.getLogger()
     logger.name = 'siptrack-generate-dns'
@@ -417,7 +417,7 @@ def init_logging(config):
     if log_handler == 'file':
         log_file = config.get('log-file')
         if log_file is None:
-            print 'error: invalid log-file value, must be a valid file path'
+            print('error: invalid log-file value, must be a valid file path')
             sys.exit(1)
         handler = logging.FileHandler(filename = log_file)
         formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
@@ -425,7 +425,7 @@ def init_logging(config):
         handler = logging.handlers.SysLogHandler(address='/dev/log')
         formatter = logging.Formatter('%(name)s: %(levelname)s %(message)s')
     else:
-        print 'error: invalid log-handler value, must be one of: syslog, file'
+        print('error: invalid log-handler value, must be one of: syslog, file')
         sys.exit(1)
     handler.setFormatter(formatter)
     logger.addHandler(handler)
@@ -480,7 +480,7 @@ def main():
     (options, args) = parser.parse_args()
 
     if len(args) != 1 or args[0] not in ['slave', 'master']:
-        print 'error: need to select master or slave mode'
+        print('error: need to select master or slave mode')
         parser.print_help()
         sys.exit(1)
     runtype = args[0]
@@ -497,30 +497,30 @@ def main():
                 'template']
         for opt in required_opts:
             if not config.get(opt):
-                print 'error: missing required option %s' % (opt)
+                print('error: missing required option %s' % (opt))
                 sys.exit(1)
     if runtype == 'slave':
         required_opts = ['slave-named-conf', 'slave-zonefile-dir',
                 'slave-masters']
         for opt in required_opts:
             if not config.get(opt):
-                print 'error: missing required option %s' % (opt)
+                print('error: missing required option %s' % (opt))
                 sys.exit(1)
 
     if config.get('zonefile-output-dir') and not \
             os.path.isdir(config.get('zonefile-output-dir')):
-        print 'error: invalid zonefile output directory'
+        print('error: invalid zonefile output directory')
         sys.exit(1)
 
     if config.get('template'):
         if not os.path.isfile(config.get('template')):
-            print 'error: invalid template file'
+            print('error: invalid template file')
             sys.exit(1)
 
     domains = None
     if config.get('domains-file'):
         if not os.path.isfile(config.get('domains-file')):
-            print 'error: invalid domains file'
+            print('error: invalid domains file')
             sys.exit(1)
         domains = [d.strip() for d in open(config.get('domains-file')) \
                 if len(d.strip()) > 0]
@@ -528,7 +528,7 @@ def main():
     if not config.get('subdevice-handler'):
         config.set('subdevice-handler', 'expand-primary')
     elif config.get('subdevice-handler') not in ['fqdn', 'expand-primary', 'skip']:
-        print 'error: invalid subdevice handler, must be one of: fqdn, expand-primary, skip'
+        print('error: invalid subdevice handler, must be one of: fqdn, expand-primary, skip')
         sys.exit(1)
 
     if not config.get('subdevice-separator'):
@@ -540,8 +540,8 @@ def main():
 
     try:
         create_pid_file()
-    except AlreadyRunningError, e:
-        print str(e)
+    except AlreadyRunningError as e:
+        print(str(e))
         sys.exit(1)
 
     dnsrecords = DNSRecords()
@@ -550,8 +550,8 @@ def main():
         config.sections = ['GENERATE-DNS', 'DEFAULT']
         con = siptracklib.fconnect()
         config.sections = ['GENERATE-DNS']
-    except siptracklib.errors.SiptrackError, e:
-        print 'error: problem connecting to siptrack server: %s' % (str(e))
+    except siptracklib.errors.SiptrackError as e:
+        print('error: problem connecting to siptrack server: %s' % (str(e)))
         sys.exit(1)
     logging.info('starting record generation')
     con.fetch(-1)

@@ -6,6 +6,13 @@ from siptracklib import attribute
 from siptracklib import password
 from siptracklib import errors
 
+
+# Python3 compatibility hack
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 class BaseUserManager(treenodes.BaseNode):
     def listUsers(self):
         return self.listChildren(include = ['user local', 'user ldap', 'user active directory'])
@@ -53,7 +60,7 @@ class UserManagerLDAP(BaseUserManager):
             raise errors.SiptrackError('invalid port in UserManagerLDAP object')
         if type(self.base_dn) not in [unicode, str]:
             raise errors.SiptrackError('invalid base dn in UserManagerLDAP object')
-        if type(self.valid_groups) is not list:
+        if not isinstance(self.valid_groups, list):
             raise errors.SiptrackError('invalid valid groups in UserManagerLDAP object')
         self.oid = self.transport.add(self.parent.oid, self.connection_type,
                 self.server, self.port, self.base_dn, self.valid_groups)
@@ -108,7 +115,7 @@ class UserManagerActiveDirectory(BaseUserManager):
             raise errors.SiptrackError('invalid server in UserManagerActiveDirectory object')
         if type(self.base_dn) not in [unicode, str]:
             raise errors.SiptrackError('invalid base dn in UserManagerActiveDirectory object')
-        if type(self.valid_groups) is not list:
+        if not isinstance(self.valid_groups, list):
             raise errors.SiptrackError('invalid valid groups in UserManagerActiveDirectory object')
         if type(self.user_domain) not in [unicode, str]:
             raise errors.SiptrackError('invalid user domain in UserManagerActiveDirectory object')

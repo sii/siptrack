@@ -77,8 +77,7 @@ class Network(treenodes.BaseNode):
         if include_missing:
             children = self.listChildren(include = ['ipv6 network'])
             missing = self.findMissingNetworks()
-            all = list(children) + list(missing)
-            all.sort()
+            all = sorted(list(children) + list(missing))
             return iter(all)
         else:
             return self.listChildren(include = ['ipv6 network'])

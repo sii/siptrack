@@ -5,9 +5,9 @@ import os
 try:
     import siptracklib
     import siptracklib.commands
-except ImportError, e:
-    print >>sys.stderr, "ERROR: unable to import siptracklib"
-    print >>sys.stderr, "verify that siptracklib is in your PYTHONPATH"
+except ImportError as e:
+    print("ERROR: unable to import siptracklib", file=sys.stderr)
+    print("verify that siptracklib is in your PYTHONPATH", file=sys.stderr)
     raise
 
 class NullStream(object):

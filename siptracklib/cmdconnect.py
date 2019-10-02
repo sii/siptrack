@@ -424,9 +424,8 @@ def get_device(st, hostname, search_all, quick_search):
     attr_limit = []
     if not search_all:
         attr_limit = ['name']
-    devices = utils.search_device(st, hostname,
-            attr_limit, quick_search, max_results = 50)
-    devices.sort()
+    devices = sorted(utils.search_device(st, hostname,
+            attr_limit, quick_search, max_results = 50))
     device = utils.select_device_from_list(devices)
     return device
 
