@@ -14,9 +14,9 @@ Use 'siptrack help commands' for a list of available commands.
 def show_global_help():
     """Print global help information."""
     from siptracklib.commands import global_options
-    print global_help
+    print(global_help)
 
-    print 'Global options:'
+    print('Global options:')
     show_options(global_options)
 
 def show_topic_help(topic):
@@ -35,7 +35,7 @@ def show_topic_help(topic):
         show_commands()
         return 0
 
-    print 'Topic not found.'
+    print('Topic not found.')
     return 0
 
 def show_commands():
@@ -65,12 +65,12 @@ def show_commands():
             else:
                 usage = '%s %s' % (usage, arg.getName().upper())
 
-        print usage
+        print(usage)
 
         # Only the first line.
         help = cmd_inst.help().split('\n')[0]
-        print '    %s' % (help)
-        print
+        print('    %s' % (help))
+        print('')
 
 def show_options(options):
     """Print help for a list of Option objects."""
@@ -80,17 +80,17 @@ def show_options(options):
             out = '%s, -%s' % (out, option.getShortName())
         if option.isMultishot():
             out = '%s [multiple]' % (out)
-        print out
-        print '    %s' % (option.getHelp())
+        print(out)
+        print('    %s' % (option.getHelp()))
 
 def show_arguments(args):
     """Print help for a list of Argument objects."""
     for arg in args:
-        print '  %s' % (arg.getName()),
+        print('  %s' % (arg.getName()))
         if arg.isOptional():
-            print '(optional)',
-        print
-        print '    %s' % (arg.getHelp())
+            print('(optional)')
+        print('')
+        print('    %s' % (arg.getHelp()))
 
 def show_command_help(topic, command):
     """Print pretty help for a command."""
@@ -113,24 +113,24 @@ def show_command_help(topic, command):
         else:
             usage = '%s %s' % (usage, arg.getName().upper())
 
-    print usage
+    print(usage)
 
     if len(command.aliases) > 0:
         aliases = ''
         for alias in command.aliases:
             aliases = '%s, %s' % (aliases, alias)
         aliases = aliases[2:]
-        print 'Aliases: %s' % aliases
+        print('Aliases: %s' % aliases)
 
-    print 
-    print cmd_inst.help()
+    print('')
+    print(cmd_inst.help())
 
     if len(command.arguments) > 0:
         print
-        print 'Arguments:'
+        print('Arguments:')
         show_arguments(command.arguments)
 
     if len(command.options) > 0:
-        print
-        print 'Options:'
+        print('')
+        print('Options:')
         show_options(command.options)

@@ -278,7 +278,7 @@ def parse_option(opt, optlist, valid_opts, optdict):
         type = option.getArgumentType()
         try:
             arg = convert_arg_type(option_arg, type)
-        except SiptrackError, e:
+        except SiptrackError as e:
             raise SiptrackCommandError('invalid type for option argument \'%s\': %s' % (
                 option_arg, e.__str__()))
         convname = option.getName().replace('-', '_')
@@ -303,7 +303,7 @@ def parse_argument(arg, arglist, valid_args, argdict):
     argument = valid_args.pop(0)
     try:
         argdict[argument.getName()] = convert_arg_type(arg, argument.getType())
-    except SiptrackError, e:
+    except SiptrackError as e:
         raise SiptrackCommandError('invalid type for argument \'%s\': %s' % (
             arg, e.__str__()))
 
@@ -415,10 +415,10 @@ def main(argv):
     """
     try:
         return run_siptrack(argv[1:])
-    except SiptrackCommandError, e:
+    except SiptrackCommandError as e:
         cprint('ERROR: %s' % (e))
         return 1
-    except SiptrackError, e:
+    except SiptrackError as e:
         cprint('ERROR: %s' % (e))
         return 1
     except KeyboardInterrupt:

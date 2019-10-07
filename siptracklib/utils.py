@@ -152,7 +152,7 @@ def pick_from_list(options, msg = 'Option number'):
     default_num = None
     for pos, opt in enumerate(options):
         pos = pos + 1
-        print '[%2d] %s' % (pos, opt.option)
+        print('[%2d] %s' % (pos, opt.option))
         if opt.default:
             default_num = str(pos)
     print
@@ -210,7 +210,7 @@ def write_session_id(filename, session_id):
     exists = os.path.exists(filename)
     open(filename, 'w').write(session_id)
     if not exists:
-        os.chmod(filename, 0600)
+        os.chmod(filename, 0o600)
 
 def get_siptrack_base_dir():
     dir = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -235,7 +235,7 @@ def daemonize():
     for i in range(3):
         try:
             os.dup2(null, i)
-        except OSError, e:
+        except OSError as e:
             if e.errno != errno.EBADF:
                 raise
     os.close(null)

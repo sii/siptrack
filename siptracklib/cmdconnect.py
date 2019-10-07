@@ -52,17 +52,17 @@ class BaseConnect(object):
     def connect(self, device, username, password, hostname):
         host_os = device.attributes.get('os')
         if host_os == 'linux':
-            print 'Trying ssh connection to %s@%s with password %s' % (username, hostname, password)
+            print('Trying ssh connection to %s@%s with password %s' % (username, hostname, password))
             self._connectSSH(hostname, username, password)
         elif host_os == 'windows':
-            print 'Trying rdp connection to %s@%s with password %s' % (username, hostname, password)
+            print('Trying rdp connection to %s@%s with password %s' % (username, hostname, password))
             self._connectRDP(hostname, username, password)
         else:
             if self._checkTCPPort(hostname, 3389):
-                print 'Trying rdp connection to %s@%s with password %s' % (username, hostname, password)
+                print('Trying rdp connection to %s@%s with password %s' % (username, hostname, password))
                 self._connectRDP(hostname, username, password)
             elif self._checkTCPPort(hostname, 22):
-                print 'Trying ssh connection to %s@%s with password %s' % (username, hostname, password)
+                print('Trying ssh connection to %s@%s with password %s' % (username, hostname, password))
                 self._connectSSH(hostname, username, password)
             else:
                 raise errors.SiptrackError('Sorry, I don\'t know how to connect to this device')
@@ -119,14 +119,14 @@ class UnixConnect(BaseConnect):
             try:
                 rfds, wfds, xfds = select.select(
                         [remote_fd, pty.STDIN_FILENO], [], [])
-            except select.error, e:
+            except select.error as e:
                 if e[0] == 4: # Interrupted system call
                     continue
                 raise
             if remote_fd in rfds:
                 try:
                     data = os.read(remote_fd, 1024)
-                except OSError, e:
+                except OSError as e:
                     if e.errno != 4: # Interrupted system call
                         raise
                 else:
@@ -137,13 +137,13 @@ class UnixConnect(BaseConnect):
                             remote_fd)
                 try:
                     os.write(pty.STDOUT_FILENO, data)
-                except OSError, e:
+                except OSError as e:
                     if e.errno != 4: # Interrupted system call
                         raise
             if pty.STDIN_FILENO in rfds:
                 try:
                     data = os.read(pty.STDIN_FILENO, 1024)
-                except OSError, e:
+                except OSError as e:
                     if e.errno != 4: # Interrupted system call
                         raise
                 else:
@@ -234,11 +234,11 @@ class UnixConnect(BaseConnect):
             pipe = subprocess.Popen(cmd, stdin=subprocess.PIPE).stdin
             pipe.write(string)
             pipe.close()
-        except Exception, e:
+        except Exception as e:
             pass
 
     def _setTerminalTitle(self, title):
-        print '\033]0;%s\007' % (title)
+        print('\033]0;%s\007' % (title))
 
 
 class Win32Connect(BaseConnect):
@@ -309,7 +309,7 @@ class Win32Connect(BaseConnect):
                         continue
                     os.write(fd, '%s\r\n' % (line))
             else:
-                print 'WARNING: file not found for win32-rdp-config-template'
+                print('WARNING: file not found for win32-rdp-config-template')
         os.close(fd)
         return filename
 
@@ -325,8 +325,8 @@ class Win32Connect(BaseConnect):
             key = wreg.OpenKey(wreg.HKEY_CURRENT_USER, self._registry_rdp_key,
                     0, wreg.KEY_WRITE)
             wreg.SetValueEx(key, hostname, None, wreg.REG_DWORD, 0x0c)
-        except WindowsError, e:
-            print 'WARNING: failed to add registry key: "%s"' % (str(e))
+        except WindowsError as e:
+            print('WARNING: failed to add registry key: "%s"' % (str(e)))
             return
         else:
             key.Close()
@@ -531,7 +531,7 @@ def cmd_connect_fork(username, hostname, caller_pid, ssh_bin):
     """
     env_name = 'STCONNECT_FORK_PASS_%s' % (caller_pid)
     if env_name not in os.environ:
-        print 'Unable to find password'
+        print('Unable to find password')
         return
     passwd = os.environ[env_name]
     os.environ[env_name] = ''

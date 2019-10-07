@@ -90,10 +90,10 @@ class ObjectStore(object):
             # If we don't have a node for the parent, use the view tree.
             # Ugly..
             if not parent:
-                print 'adding to unknown parent:', node_data['parent'], node_data['oid']
+                print('adding to unknown parent:', node_data['parent'], node_data['oid'])
                 parent = self.view_tree
             if not object_registry.isValidChild(parent.class_id, node_data['class_id']):
-                print 'skipping invalid node type:', node_data['class_id'], node_data['oid']
+                print('skipping invalid node type:', node_data['class_id'], node_data['oid'])
                 continue
             parent.loadChild(node_data)
 

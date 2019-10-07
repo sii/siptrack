@@ -1,4 +1,4 @@
-class SiptrackError(StandardError):
+class SiptrackError(Exception):
     """Generic siptrack error."""
     pass
 

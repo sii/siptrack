@@ -236,7 +236,7 @@ class STSearchScreen(object):
         while not connected:
             try:
                 self.st = self.connection_manager.connect()
-            except siptracklib.errors.SiptrackError, e:
+            except siptracklib.errors.SiptrackError as e:
                 self._requestPassword()
             else:
                 connected = True
@@ -442,7 +442,7 @@ class STSearchScreen(object):
         username = self._selected_password.attributes.get('username', '')
         try:
             self.connect.connect(device, username)
-        except siptracklib.errors.SiptrackError, e:
+        except siptracklib.errors.SiptrackError as e:
             self.setStatus(str(e))
         else:
             self._addOldConnectsDevice(device)

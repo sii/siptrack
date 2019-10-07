@@ -17,7 +17,7 @@ def dotted_quad_to_num(network):
     """
     try:
         return long(struct.unpack('>L', socket.inet_aton(network))[0])
-    except socket.error, e:
+    except socket.error as e:
         raise errors.SiptrackError('%s' % e)
 
 def bitcount_to_num(netmask):
@@ -26,7 +26,7 @@ def bitcount_to_num(netmask):
     ie. convert a '/24' netmask count to an integer.
     The returned value is in host byte order.
     """
-    res = 0L
+    res = 0
     for n in range(netmask):
         res |= 1<<31 - n
     return res
@@ -597,7 +597,7 @@ def address_from_string(address, mask = True, validate = True):
     else:
         network = dotted_quad_to_num(address)
         # 255.255.255.255
-        netmask = 4294967295L
+        netmask = 4294967295
     if network is None or netmask is None:
         raise errors.SiptrackError('invalid address string: network/netmask is None')
     return Address(network, netmask, mask, validate)
