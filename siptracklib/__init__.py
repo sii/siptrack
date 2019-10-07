@@ -27,7 +27,7 @@ def connect(hostname, username = None, password = None, port = None,
     object_store = siptracklib.root.ObjectStore(t)
     return object_store
 
-from connections import ConnectionManager
+from siptracklib.connections import ConnectionManager
 cm = ConnectionManager(interactive = True)
 config = cm.config
 connection_manager = cm

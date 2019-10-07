@@ -256,12 +256,12 @@ def parse_option(opt, optlist, valid_opts, optdict):
         raise SiptrackCommandError('unknown option \'%s\'' % option_name)
 
     convname = option.getName().replace('-', '_')
-    if not option.isMultishot() and optdict.has_key(convname):
+    if not option.isMultishot() and convname in optdict:
         raise SiptrackCommandError('option \'%s\' given multiple times.' % (
             option.getName()))
 
     if not option.takesArgument():
-        if optdict.has_key(convname):
+        if convname in optdict:
             optdict[convname] += 1
         else:
             if option.isMultishot():
@@ -283,7 +283,7 @@ def parse_option(opt, optlist, valid_opts, optdict):
                 option_arg, e.__str__()))
         convname = option.getName().replace('-', '_')
         if option.isMultishot():
-            if optdict.has_key(convname):
+            if convname in optdict:
                 optdict[convname].append(arg)
             else:
                 optdict[convname] = [arg]
@@ -379,7 +379,8 @@ def run_siptrack(argv):
 
     optdict = {}
 
-    argv = [arg.decode(siptracklib.user_encoding) for arg in argv]
+    # Python3 porting
+    #argv = [arg.decode(siptracklib.user_encoding) for arg in argv]
 
     while len(argv) > 0:
         if argv[0][0] != '-':

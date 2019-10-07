@@ -1,10 +1,15 @@
-import ConfigParser
 import os
 import sys
+from configparser import SafeConfigParser
 
 import siptracklib
 from siptracklib import utils
 from siptracklib import win32utils
+
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
 default_options = {
         'retain-session': True,
@@ -79,7 +84,7 @@ class ConfigReader(object):
     Parses a configuration file and has basic retrieval methods.
     """
     def __init__(self, config_files):
-        self.conf = ConfigParser.SafeConfigParser()
+        self.conf = SafeConfigParser()
         self.config_files = config_files
         self.conf.read(config_files)
 

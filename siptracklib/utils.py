@@ -72,7 +72,9 @@ def cprint(output):
     This is a replacement for the python print function, but it deals slightly
     differently with unicode strings.
     """
-    print >>global_u_writer_fd, output
+    # Python3 porting
+    #print >>global_u_writer_fd, output
+    print(output, file=sys.stdout)
 
 def encode_noerr(string):
     """Encode a unicode string as the users prefered encoding.
@@ -105,7 +107,8 @@ def read_password(msg = 'Enter password', verify = True,
                 match = True
     finally:
         sys.stdout = old_stdout
-    password = password.decode(siptracklib.user_encoding)
+    # Python3 porting
+    #password = password.decode(siptracklib.user_encoding)
 
     return password
 
