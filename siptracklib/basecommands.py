@@ -278,10 +278,10 @@ class cmd_cmp_json_dumps(Command):
             oids_2[n['oid']] = n
 #        oids_2 = {n['oid']: n for n in data_2}
         print(len(oids_1), len(oids_2))
-        for oid, node in oids_1.iteritems():
+        for oid, node in iter(oids_1.items()):
             if oid not in oids_2:
                 print('IN 1', oid, node['cls'], time.ctime(node['ctime']))
-        for oid, node in oids_2.iteritems():
+        for oid, node in iter(oids_2.items()):
             if oid not in oids_1:
                 print('IN 2', oid, node['cls'], time.ctime(node['ctime']))
         return 0

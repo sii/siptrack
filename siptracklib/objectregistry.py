@@ -79,7 +79,9 @@ class ObjectRegistry(object):
 
     def iterChildrenByName(self, parent_name):
         if parent_name in self.object_classes_by_name:
-            return self.object_classes_by_name[parent_name].valid_children.itervalues()
+            return iter(
+                self.object_classes_by_name[parent_name].valid_children.values()
+            )
         return []
 
     def iterRegisteredClassNames(self):
