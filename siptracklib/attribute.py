@@ -19,9 +19,7 @@ class AttributeBase(treenodes.BaseNode):
         self._value = value
 
 
-    def __lt__(self, other):
-        if not isinstance(other, treenodes.BaseNode):
-            return False
+    def old__lt__(self, other):
         if not other.class_name in self._valid_attributes:
             return False
         if self.name < other.name:
@@ -29,9 +27,7 @@ class AttributeBase(treenodes.BaseNode):
         return False
 
 
-    def __eq__(self, other):
-        if not isinstance(other, treenodes.BaseNode):
-            return False
+    def old__eq__(self, other):
         if not other.class_name in self._valid_attributes:
             return False
         if self.name == other.name:

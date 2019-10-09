@@ -88,39 +88,39 @@ class Address(object):
     def __str__(self):
         return self.printableCIDR()
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         """True if the current address is a subnet of 'other'."""
         if self.start >= other.start and self.end <= other.end:
             if self.start > other.start or self.end < other.end:
                 return True
         return False
 
-    def __le__(self, other):
+    def old__le__(self, other):
         """True if the current address is a subnet of, or equal to, 'other'."""
         if self.start >= other.start and self.end <= other.end:
             return True
         return False
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         """True if the addresses are identical."""
         if self.start == other.start and self.end == other.end:
             return True
         return False
-    
-    def __ne__(self, other):
+
+    def old__ne__(self, other):
         """True if the address are not identical."""
         if self.start != other.start or self.end != other.end:
             return True
         return False
-    
-    def __gt__(self, other):
+
+    def old__gt__(self, other):
         """True if the current address is a supernet of 'other'."""
         if other.start >= self.start and other.end <= self.end:
             if other.start > self.start or other.end < self.end:
                 return True
         return False
-    
-    def __ge__(self, other):
+
+    def old__ge__(self, other):
         """True if the current address is a supernet of, or equal to, 'other'."""
         if other.start >= self.start and other.end <= self.end:
             return True
@@ -226,7 +226,7 @@ class Network(treenodes.BaseNode):
     def __str__(self):
         return '%s' % (self.address.printablePretty())
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         if not (isinstance(other, treenodes.BaseNode) or \
                 isinstance(other, UnallocatedNetwork)) or \
                 not other.class_name in ['ipv4 network', 'ipv4 network unallocated']:
@@ -235,7 +235,7 @@ class Network(treenodes.BaseNode):
             return True
         return False
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         if not (isinstance(other, treenodes.BaseNode) or \
                 isinstance(other, UnallocatedNetwork)) or \
                 not other.class_name in ['ipv4 network', 'ipv4 network unallocated']:
@@ -356,7 +356,7 @@ class UnallocatedNetwork(object):
     def __str__(self):
         return '%s' % (self.address.printablePretty())
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         if not (isinstance(other, treenodes.BaseNode) or \
                 isinstance(other, UnallocatedNetwork)) or \
                 not other.class_name in ['ipv4 network', 'ipv4 network unallocated']:
@@ -365,7 +365,7 @@ class UnallocatedNetwork(object):
             return True
         return False
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         if not (isinstance(other, treenodes.BaseNode) or \
                 isinstance(other, UnallocatedNetwork)) or \
                 not other.class_name in ['ipv4 network', 'ipv4 network unallocated']:
@@ -417,39 +417,39 @@ class Range(object):
     def __str__(self):
         return self.printable()
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         """True if the current address is a subnet of 'other'."""
         if self.start >= other.start and self.end <= other.end:
             if self.start > other.start or self.end < other.end:
                 return True
         return False
 
-    def __le__(self, other):
+    def old__le__(self, other):
         """True if the current address is a subnet of, or equal to, 'other'."""
         if self.start >= other.start and self.end <= other.end:
             return True
         return False
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         """True if the addresses are identical."""
         if self.start == other.start and self.end == other.end:
             return True
         return False
-    
-    def __ne__(self, other):
+
+    def old__ne__(self, other):
         """True if the address are not identical."""
         if self.start != other.start or self.end != other.end:
             return True
         return False
-    
-    def __gt__(self, other):
+
+    def old__gt__(self, other):
         """True if the current address is a supernet of 'other'."""
         if other.start >= self.start and other.end <= self.end:
             if other.start > self.start or other.end < self.end:
                 return True
         return False
-    
-    def __ge__(self, other):
+
+    def old__ge__(self, other):
         """True if the current address is a supernet of, or equal to, 'other'."""
         if other.start >= self.start and other.end <= self.end:
             return True
@@ -462,13 +462,13 @@ class Range(object):
     def transportable(self):
         return '%s %s' % (self.numToDottedQuad(self.start),
                 self.numToDottedQuad(self.end))
-    
+
     def printableStart(self):
         return self.numToDottedQuad(self.start)
-    
+
     def printableEnd(self):
         return self.numToDottedQuad(self.end)
-    
+
     def numToDottedQuad(self, network):
         """Convert an unsigned integer into a 'dotted quad' string.
 
@@ -498,7 +498,7 @@ class NetworkRange(treenodes.BaseNode):
     def __str__(self):
         return '%s' % (self.range.printable())
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         if not isinstance(other, treenodes.BaseNode) or \
                 not other.class_name in ['ipv4 network range']:
             return super(NetworkRange, self).__lt__(other)
@@ -506,7 +506,7 @@ class NetworkRange(treenodes.BaseNode):
             return True
         return False
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         if not isinstance(other, treenodes.BaseNode) or \
                 not other.class_name in ['ipv4 network range']:
             return super(NetworkRange, self).__eq__(other)

@@ -440,32 +440,32 @@ class _BaseIP(_IPAddrBase):
             and '/' in str(address)):
             raise AddressValueError(address)
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         try:
             return (self._ip == other._ip
                     and self._version == other._version)
         except AttributeError:
             return NotImplemented
 
-    def __ne__(self, other):
+    def old__ne__(self, other):
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
         return not eq
 
-    def __le__(self, other):
+    def old__le__(self, other):
         gt = self.__gt__(other)
         if gt is NotImplemented:
             return NotImplemented
         return not gt
 
-    def __ge__(self, other):
+    def old__ge__(self, other):
         lt = self.__lt__(other)
         if lt is NotImplemented:
             return NotImplemented
         return not lt
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         if self._version != other._version:
             raise TypeError('%s and %s are not of the same version' % (
                     str(self), str(other)))
@@ -476,7 +476,7 @@ class _BaseIP(_IPAddrBase):
             return self._ip < other._ip
         return False
 
-    def __gt__(self, other):
+    def old__gt__(self, other):
         if self._version != other._version:
             raise TypeError('%s and %s are not of the same version' % (
                     str(self), str(other)))
@@ -564,7 +564,7 @@ class _BaseNet(_IPAddrBase):
                 raise IndexError
             return IPAddress(broadcast + n, version=self._version)
 
-    def __lt__(self, other):
+    def old__lt__(self, other):
         if self._version != other._version:
             raise TypeError('%s and %s are not of the same version' % (
                     str(self), str(other)))
@@ -577,7 +577,7 @@ class _BaseNet(_IPAddrBase):
             return self.netmask < other.netmask
         return False
 
-    def __gt__(self, other):
+    def old__gt__(self, other):
         if self._version != other._version:
             raise TypeError('%s and %s are not of the same version' % (
                     str(self), str(other)))
@@ -590,19 +590,19 @@ class _BaseNet(_IPAddrBase):
             return self.netmask > other.netmask
         return False
 
-    def __le__(self, other):
+    def old__le__(self, other):
         gt = self.__gt__(other)
         if gt is NotImplemented:
             return NotImplemented
         return not gt
 
-    def __ge__(self, other):
+    def old__ge__(self, other):
         lt = self.__lt__(other)
         if lt is NotImplemented:
             return NotImplemented
         return not lt
 
-    def __eq__(self, other):
+    def old__eq__(self, other):
         try:
             return (self._version == other._version
                     and self.network == other.network
@@ -612,7 +612,7 @@ class _BaseNet(_IPAddrBase):
                 return (self._version == other._version
                         and self._ip == other._ip)
 
-    def __ne__(self, other):
+    def old__ne__(self, other):
         eq = self.__eq__(other)
         if eq is NotImplemented:
             return NotImplemented
