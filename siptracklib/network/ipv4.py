@@ -16,7 +16,7 @@ def dotted_quad_to_num(network):
     The number is returned in host byte order.
     """
     try:
-        return long(struct.unpack('>L', socket.inet_aton(network))[0])
+        return struct.unpack('>L', socket.inet_aton(network))[0]
     except socket.error as e:
         raise errors.SiptrackError('%s' % e)
 

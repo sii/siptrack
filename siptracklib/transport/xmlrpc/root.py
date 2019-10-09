@@ -60,7 +60,7 @@ class RootRPC(baserpc.BaseRPC):
                 yield self._decodeFetchData(result['data'])
 
     def _decodeFetchData(self, data):
-        data = zlib.decompress(str(data))
+        data = zlib.decompress(data.data)
         data = json_decode(data)
         new_data = []
         for ent in data:
@@ -104,7 +104,7 @@ class RootRPC(baserpc.BaseRPC):
                 yield self._decodeSearchData(result['data'])
 
     def _decodeSearchData(self, data):
-        data = zlib.decompress(str(data))
+        data = zlib.decompress(data.data)
         data = json_decode(data)
         match_data, oids = data
         new_data = []

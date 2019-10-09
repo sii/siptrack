@@ -249,8 +249,11 @@ def search_device(st, searchstring, attr_limit = [], quick = True, max_results =
                                 include = ['device', 'ipv4 network', 'ipv6 network'],
                                 max_results = max_results)
     else:
-        result = st.search(searchstring, attr_limit,
-                include = ['device', 'ipv4 network', 'ipv6 network'])
+        result = st.search(
+            searchstring,
+            attr_limit,
+            include = ['device', 'ipv4 network', 'ipv6 network']
+        )
     devices = set()
     for node in result:
         if node.class_name == 'device':
