@@ -102,7 +102,7 @@ def traverse_tree_depth_first(root, include_root, max_depth, filter = None,
     cur_iterator = iter(root.children)
     while cur_iterator != None:
         try:
-            node = cur_iterator.next()
+            node = next(cur_iterator)
             if filter.filter(node) == 1:
                 if include_depth:
                     yield (depth, node)
@@ -134,7 +134,7 @@ def traverse_tree_reverse(root, include_root):
     cur_iterator = iter(root.children)
     while cur_iterator != None:
         try:
-            node = cur_iterator.next()
+            node = next(cur_iterator)
             if node.children:
                 iterators.append((cur_iterator, node))
                 cur_iterator = iter(node.children)
@@ -149,9 +149,10 @@ def traverse_tree_reverse(root, include_root):
     if include_root:
         yield root
 
-def traverse_list(entries, filter = None, sorted = False):
+def traverse_list(entries, filter = None, sort = False):
     """Walk a list using the given filter (if any)."""
-    if sorted:
+
+    if sort:
         entries = sorted(entries)
     if filter == None:
         filter = filter_include
@@ -203,6 +204,9 @@ class BaseNode(object):
     def __lt__(self, other):
         if not isinstance(other, BaseNode):
             return False
+        return self.oid < other.oid
+
+    def old__lt__(self, other):
         mine = self.attributes.get('name', None)
         theirs = other.attributes.get('name', None)
         if mine is not None and theirs is not None:
@@ -218,6 +222,9 @@ class BaseNode(object):
     def __eq__(self, other):
         if not isinstance(other, BaseNode):
             return False
+        return self.oid == other.oid
+
+    def old__eq__(self, other):
         mine = self.attributes.get('name')
         theirs = other.attributes.get('name')
         if mine is not None and theirs is not None:
@@ -232,6 +239,9 @@ class BaseNode(object):
 
     def __gt__(self, other):
         return not self.__lt__(other)
+
+    def __hash__(self):
+        return hash(self.oid)
 
     def createChildByID(self, class_id, *args, **kwargs):
         if not object_registry.isValidChild(self.class_id, class_id):
@@ -357,7 +367,8 @@ class BaseNode(object):
                 ret = False
         return ret
 
-    def _get_associations(self):
+    @property
+    def associations(self):
         for oid in self._associations:
             try:
                 node = self.root.getOID(oid)
@@ -366,11 +377,12 @@ class BaseNode(object):
             if node:
                 yield node
 
-    def _set_associations(self, value):
-        return
-    associations = property(_get_associations, _set_associations)
+    #def _set_associations(self, value):
+    #    return
+    #associations = property(_get_associations, _set_associations)
 
-    def _get_references(self):
+    @property
+    def references(self):
         for oid in self._references:
             try:
                 node = self.root.getOID(oid)
@@ -379,9 +391,9 @@ class BaseNode(object):
             if node:
                 yield node
 
-    def _set_references(self, value):
-        return
-    references = property(_get_references, _set_references)
+    #def _set_references(self, value):
+    #    return
+    #references = property(_get_references, _set_references)
 
     def listAssociations(self, include = [], exclude = [], sorted = True):
         node_filter = NodeFilter(include, exclude, no_match_break = False)
@@ -540,7 +552,7 @@ class BaseNode(object):
                     stypes[child.sort_type] = []
                 stypes[child.sort_type].append(child)
             self.children = []
-            for children in stypes.itervalues():
+            for children in iter(stypes.values()):
                 children.sort()
                 self.children += children
 
